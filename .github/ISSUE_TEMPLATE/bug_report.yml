@@ -1,0 +1,162 @@
+name: 🐛 Bug Report
+description: Report a bug in NeuroLearn platform
+title: "[Bug]: "
+labels: ["bug", "needs-triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for reporting a bug! Please fill out the information below to help us resolve it quickly.
+        
+        **⚠️ Security Issues**: If this is a security vulnerability, please email security@neurolearn.edu instead of creating a public issue.
+
+  - type: checkboxes
+    id: preflight
+    attributes:
+      label: Preflight Checklist
+      description: Please ensure you've completed these steps
+      options:
+        - label: I have searched existing issues to avoid duplicates
+          required: true
+        - label: I have checked the documentation
+          required: true
+        - label: This is not a security vulnerability
+          required: true
+
+  - type: dropdown
+    id: component
+    attributes:
+      label: Component
+      description: Which part of NeuroLearn is affected?
+      options:
+        - Student Learning Interface
+        - Parent Dashboard
+        - Educator Portal
+        - Authentication Service
+        - AI Adaptation Engine
+        - Database/Backend
+        - Accessibility Features
+        - Other (specify in description)
+    validations:
+      required: true
+
+  - type: dropdown
+    id: severity
+    attributes:
+      label: Severity
+      description: How severe is this bug?
+      options:
+        - Critical (affects student safety or data security)
+        - High (prevents core learning functionality)
+        - Medium (impacts user experience)
+        - Low (minor issue or cosmetic)
+    validations:
+      required: true
+
+  - type: textarea
+    id: description
+    attributes:
+      label: Bug Description
+      description: A clear description of what the bug is
+      placeholder: Describe what happened and what you expected to happen
+    validations:
+      required: true
+
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Steps to Reproduce
+      description: Step-by-step instructions to reproduce the bug
+      placeholder: |
+        1. Go to '...'
+        2. Click on '...'
+        3. See error
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected Behavior
+      description: What should have happened?
+    validations:
+      required: true
+
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual Behavior
+      description: What actually happened?
+    validations:
+      required: true
+
+  - type: dropdown
+    id: accessibility-impact
+    attributes:
+      label: Accessibility Impact
+      description: Does this bug affect accessibility features?
+      options:
+        - No accessibility impact
+        - Affects keyboard navigation
+        - Affects screen readers
+        - Affects color contrast/visibility
+        - Affects sensory customizations
+        - Multiple accessibility issues
+    validations:
+      required: true
+
+  - type: dropdown
+    id: user-role
+    attributes:
+      label: Affected User Role
+      description: Which user role experiences this bug?
+      options:
+        - Student
+        - Parent
+        - Teacher
+        - Therapist
+        - Administrator
+        - All roles
+        - Multiple roles (specify in description)
+    validations:
+      required: true
+
+  - type: textarea
+    id: environment
+    attributes:
+      label: Environment Details
+      description: Technical details about your setup
+      placeholder: |
+        - Browser: [e.g., Chrome 118, Firefox 119, Safari 17]
+        - Operating System: [e.g., Windows 11, macOS 14, Ubuntu 22.04]
+        - Device: [e.g., Desktop, Tablet, Mobile]
+        - Assistive Technology: [e.g., NVDA, JAWS, VoiceOver, Dragon]
+        - Screen Resolution: [if relevant]
+    validations:
+      required: true
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: Error Logs/Screenshots
+      description: |
+        Include any relevant error messages, console logs, or screenshots.
+        **⚠️ Important**: Please remove any personally identifiable information (PII) from logs/screenshots.
+      placeholder: Paste error messages or drag screenshots here
+
+  - type: checkboxes
+    id: privacy-check
+    attributes:
+      label: Privacy Verification
+      description: Confirm you've removed sensitive information
+      options:
+        - label: I have removed all student names, emails, and personal information from this report
+          required: true
+        - label: I have not included any authentication tokens, passwords, or API keys
+          required: true
+
+  - type: textarea
+    id: additional
+    attributes:
+      label: Additional Context
+      description: Any other context about the problem (e.g., when it started, frequency, workarounds)

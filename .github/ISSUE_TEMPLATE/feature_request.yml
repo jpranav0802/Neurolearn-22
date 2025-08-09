@@ -1,0 +1,187 @@
+name: ✨ Feature Request
+description: Suggest a new feature for NeuroLearn
+title: "[Feature]: "
+labels: ["enhancement", "needs-triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for suggesting a feature! We're excited to hear your ideas for improving NeuroLearn for neurodiverse students.
+
+  - type: checkboxes
+    id: preflight
+    attributes:
+      label: Preflight Checklist
+      description: Please ensure you've completed these steps
+      options:
+        - label: I have searched existing issues and feature requests
+          required: true
+        - label: I have checked the project roadmap
+          required: true
+        - label: This feature aligns with NeuroLearn's mission for neurodiverse students
+          required: true
+
+  - type: dropdown
+    id: category
+    attributes:
+      label: Feature Category
+      description: What type of feature is this?
+      options:
+        - Learning & Education
+        - Accessibility & Inclusion
+        - AI & Personalization
+        - Communication & Collaboration
+        - Analytics & Progress Tracking
+        - Security & Privacy
+        - Platform & Infrastructure
+        - Other (specify in description)
+    validations:
+      required: true
+
+  - type: dropdown
+    id: target-users
+    attributes:
+      label: Target Users
+      description: Who would primarily benefit from this feature?
+      options:
+        - Students (neurodiverse learners)
+        - Parents/Guardians
+        - Teachers/Educators
+        - Therapists/Specialists
+        - Administrators
+        - All stakeholders
+        - Multiple groups (specify in description)
+    validations:
+      required: true
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem Statement
+      description: What problem does this feature solve?
+      placeholder: |
+        Describe the current challenge or limitation that affects neurodiverse students or their support network.
+        Example: "Students with autism often struggle with sensory overload from bright animations..."
+    validations:
+      required: true
+
+  - type: textarea
+    id: solution
+    attributes:
+      label: Proposed Solution
+      description: Describe your proposed feature in detail
+      placeholder: |
+        Explain how your feature would work and how it addresses the problem.
+        Include any specific requirements for neurodiverse learners.
+    validations:
+      required: true
+
+  - type: textarea
+    id: user-story
+    attributes:
+      label: User Story
+      description: Write a user story for this feature
+      placeholder: |
+        As a [type of user], I want [what] so that [why].
+        Example: "As a student with sensory sensitivities, I want to customize animation speed so that I can focus on learning without visual overwhelm."
+    validations:
+      required: true
+
+  - type: dropdown
+    id: accessibility-considerations
+    attributes:
+      label: Accessibility Considerations
+      description: How does this feature support accessibility?
+      options:
+        - Improves keyboard navigation
+        - Enhances screen reader compatibility
+        - Supports sensory customization
+        - Improves visual accessibility (contrast, fonts)
+        - Supports cognitive accessibility
+        - Multiple accessibility benefits
+        - No specific accessibility impact
+    validations:
+      required: true
+
+  - type: dropdown
+    id: autism-specific
+    attributes:
+      label: Autism-Specific Benefits
+      description: How does this feature specifically help students with autism?
+      options:
+        - Supports sensory processing needs
+        - Aids communication and social skills
+        - Helps with executive function
+        - Reduces anxiety and overwhelm
+        - Supports routine and predictability
+        - Assists with emotional regulation
+        - Multiple autism-specific benefits
+        - General educational benefit
+    validations:
+      required: true
+
+  - type: textarea
+    id: acceptance-criteria
+    attributes:
+      label: Acceptance Criteria
+      description: What specific requirements must be met for this feature to be complete?
+      placeholder: |
+        List measurable criteria that define when this feature is done.
+        Example:
+        - [ ] Feature works with keyboard navigation
+        - [ ] Feature is compatible with screen readers
+        - [ ] Feature includes user preference settings
+        - [ ] Feature maintains COPPA/FERPA compliance
+    validations:
+      required: true
+
+  - type: dropdown
+    id: priority
+    attributes:
+      label: Priority Level
+      description: How important is this feature?
+      options:
+        - Critical (addresses safety or major accessibility barrier)
+        - High (significantly improves learning outcomes)
+        - Medium (nice to have, good user experience)
+        - Low (minor enhancement)
+    validations:
+      required: true
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternative Solutions
+      description: Have you considered any alternative approaches?
+      placeholder: Describe other ways this problem could be solved
+
+  - type: textarea
+    id: examples
+    attributes:
+      label: Examples/References
+      description: Any examples, mockups, or references to similar features?
+      placeholder: |
+        Include links to similar features in other educational platforms,
+        research papers, or mockups/sketches of your idea.
+
+  - type: checkboxes
+    id: compliance
+    attributes:
+      label: Compliance Considerations
+      description: Have you considered these compliance aspects?
+      options:
+        - label: This feature maintains COPPA compliance for users under 13
+        - label: This feature supports FERPA requirements for educational records
+        - label: This feature doesn't introduce new privacy risks
+        - label: This feature includes appropriate audit logging
+
+  - type: textarea
+    id: additional-context
+    attributes:
+      label: Additional Context
+      description: Any other information about this feature request?
+      placeholder: |
+        - Research or evidence supporting this feature
+        - Feedback from students, parents, or educators
+        - Timeline considerations
+        - Dependencies on other features

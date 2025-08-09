@@ -1,0 +1,230 @@
+version: '3.8'
+
+services:
+  # Database Services
+  postgres:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_DB: neurolearn
+      POSTGRES_USER: neurolearn
+      POSTGRES_PASSWORD: neurolearn_dev
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./infrastructure/init-db.sql:/docker-entrypoint-initdb.d/init-db.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U neurolearn"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    command: redis-server --appendonly yes
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
+  # Backend Services
+  auth-service:
+    build:
+      context: ./backend/auth-service
+      dockerfile: Dockerfile
+    ports:
+      - "3001:3000"
+    environment:
+      NODE_ENV: development
+      PORT: 3000
+      DATABASE_URL: postgres://neurolearn:neurolearn_dev@postgres:5432/neurolearn
+      REDIS_URL: redis://redis:6379
+      JWT_SECRET: your-jwt-secret-key
+      JWT_EXPIRY: 7d
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    volumes:
+      - ./backend/auth-service:/app
+      - /app/node_modules
+    command: npm run dev
+
+  learning-engine:
+    build:
+      context: ./backend/learning-engine
+      dockerfile: Dockerfile
+    ports:
+      - "3002:3000"
+    environment:
+      NODE_ENV: development
+      PORT: 3000
+      DATABASE_URL: postgres://neurolearn:neurolearn_dev@postgres:5432/neurolearn
+      REDIS_URL: redis://redis:6379
+      AUTH_SERVICE_URL: http://auth-service:3000
+      AI_ADAPTATION_URL: http://adaptation-engine:8000
+    depends_on:
+      - postgres
+      - redis
+      - auth-service
+    volumes:
+      - ./backend/learning-engine:/app
+      - /app/node_modules
+    command: npm run dev
+
+  content-service:
+    build:
+      context: ./backend/content-service
+      dockerfile: Dockerfile
+    ports:
+      - "3003:3000"
+    environment:
+      NODE_ENV: development
+      PORT: 3000
+      DATABASE_URL: postgres://neurolearn:neurolearn_dev@postgres:5432/neurolearn
+      REDIS_URL: redis://redis:6379
+      AUTH_SERVICE_URL: http://auth-service:3000
+    depends_on:
+      - postgres
+      - redis
+      - auth-service
+    volumes:
+      - ./backend/content-service:/app
+      - /app/node_modules
+    command: npm run dev
+
+  analytics-service:
+    build:
+      context: ./backend/analytics-service
+      dockerfile: Dockerfile
+    ports:
+      - "3004:3000"
+    environment:
+      NODE_ENV: development
+      PORT: 3000
+      DATABASE_URL: postgres://neurolearn:neurolearn_dev@postgres:5432/neurolearn
+      REDIS_URL: redis://redis:6379
+      AUTH_SERVICE_URL: http://auth-service:3000
+    depends_on:
+      - postgres
+      - redis
+      - auth-service
+    volumes:
+      - ./backend/analytics-service:/app
+      - /app/node_modules
+    command: npm run dev
+
+  # AI Services
+  adaptation-engine:
+    build:
+      context: ./ai-services/adaptation-engine
+      dockerfile: Dockerfile
+    ports:
+      - "8001:8000"
+    environment:
+      ENVIRONMENT: development
+      DATABASE_URL: postgres://neurolearn:neurolearn_dev@postgres:5432/neurolearn
+      REDIS_URL: redis://redis:6379
+      MODEL_PATH: /app/models
+    depends_on:
+      - postgres
+      - redis
+    volumes:
+      - ./ai-services/adaptation-engine:/app
+      - ai_models:/app/models
+    command: python main.py
+
+  behavior-analysis:
+    build:
+      context: ./ai-services/behavior-analysis
+      dockerfile: Dockerfile
+    ports:
+      - "8002:8000"
+    environment:
+      ENVIRONMENT: development
+      DATABASE_URL: postgres://neurolearn:neurolearn_dev@postgres:5432/neurolearn
+      REDIS_URL: redis://redis:6379
+    depends_on:
+      - postgres
+      - redis
+    volumes:
+      - ./ai-services/behavior-analysis:/app
+    command: python main.py
+
+  content-generation:
+    build:
+      context: ./ai-services/content-generation
+      dockerfile: Dockerfile
+    ports:
+      - "8003:8000"
+    environment:
+      ENVIRONMENT: development
+      DATABASE_URL: postgres://neurolearn:neurolearn_dev@postgres:5432/neurolearn
+      REDIS_URL: redis://redis:6379
+    depends_on:
+      - postgres
+      - redis
+    volumes:
+      - ./ai-services/content-generation:/app
+    command: python main.py
+
+  # Frontend Services (Development)
+  student-app:
+    build:
+      context: ./frontend/student-app
+      dockerfile: Dockerfile.dev
+    ports:
+      - "3000:3000"
+    environment:
+      REACT_APP_API_URL: http://localhost:3001
+      REACT_APP_LEARNING_ENGINE_URL: http://localhost:3002
+      REACT_APP_CONTENT_SERVICE_URL: http://localhost:3003
+      REACT_APP_ANALYTICS_URL: http://localhost:3004
+    volumes:
+      - ./frontend/student-app:/app
+      - /app/node_modules
+    command: npm start
+
+  parent-dashboard:
+    build:
+      context: ./frontend/parent-dashboard
+      dockerfile: Dockerfile.dev
+    ports:
+      - "3100:3000"
+    environment:
+      REACT_APP_API_URL: http://localhost:3001
+      REACT_APP_ANALYTICS_URL: http://localhost:3004
+    volumes:
+      - ./frontend/parent-dashboard:/app
+      - /app/node_modules
+    command: npm start
+
+  educator-portal:
+    build:
+      context: ./frontend/educator-portal
+      dockerfile: Dockerfile.dev
+    ports:
+      - "3200:3000"
+    environment:
+      REACT_APP_API_URL: http://localhost:3001
+      REACT_APP_LEARNING_ENGINE_URL: http://localhost:3002
+      REACT_APP_ANALYTICS_URL: http://localhost:3004
+    volumes:
+      - ./frontend/educator-portal:/app
+      - /app/node_modules
+    command: npm start
+
+volumes:
+  postgres_data:
+  redis_data:
+  ai_models:
+
+networks:
+  default:
+    driver: bridge

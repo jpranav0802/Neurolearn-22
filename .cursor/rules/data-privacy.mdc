@@ -1,0 +1,221 @@
+---
+globs: *.ts,*.js,*.tsx,*.jsx,*.py,*.sql
+description: Data privacy and compliance guidelines for handling student information
+---
+
+# Data Privacy & Compliance Standards
+
+## Legal Compliance Requirements
+- **COPPA Compliance**: Children under 13 require verifiable parental consent
+- **FERPA Compliance**: Educational records must be protected and accessible to parents
+- **State Privacy Laws**: Comply with applicable state student data privacy laws
+- **International**: GDPR compliance for international users
+
+## Data Classification & Handling
+
+### Personally Identifiable Information (PII)
+```typescript
+// ✅ Good - Encrypted PII handling
+interface StudentPII {
+  readonly studentId: string;        // Hashed identifier
+  readonly encryptedName: string;    // Encrypted storage
+  readonly encryptedEmail?: string;  // Optional, encrypted
+  readonly hashedPhone?: string;     // One-way hashed
+}
+
+// ❌ Bad - Plain text PII
+interface BadStudent {
+  name: string;     // Never store plain text
+  email: string;    // Security risk
+  ssn: string;      // Absolutely forbidden
+}
+```
+
+### Educational Data
+```typescript
+// ✅ Educational records with proper attribution
+interface LearningProgress {
+  readonly studentId: string;           // Anonymous identifier
+  readonly lessonId: string;           
+  readonly completionDate: Date;
+  readonly performanceScore: number;
+  readonly timeSpent: number;
+  readonly assistanceLevel: 'none' | 'minimal' | 'moderate' | 'full';
+  readonly dataRetentionDate: Date;    // Auto-deletion date
+}
+```
+
+### Behavioral & Emotional Data
+```typescript
+// ✅ Sensitive behavioral data handling
+interface EmotionalState {
+  readonly sessionId: string;          // Temporary session only
+  readonly timestamp: Date;
+  readonly stressLevel: 1 | 2 | 3 | 4 | 5;
+  readonly engagementLevel: number;
+  readonly triggerEvents?: string[];   // Encrypted
+  readonly interventionSuggested: boolean;
+  // Note: No long-term storage without explicit consent
+}
+```
+
+## Implementation Standards
+
+### Data Access Controls
+```typescript
+// ✅ Role-based data access
+enum UserRole {
+  STUDENT = 'student',
+  PARENT = 'parent', 
+  TEACHER = 'teacher',
+  THERAPIST = 'therapist',
+  ADMIN = 'admin'
+}
+
+class DataAccessControl {
+  static canAccessStudentData(requestorRole: UserRole, studentId: string, requestorId: string): boolean {
+    switch (requestorRole) {
+      case UserRole.STUDENT:
+        return studentId === requestorId; // Own data only
+      case UserRole.PARENT:
+        return this.isParentOf(requestorId, studentId);
+      case UserRole.TEACHER:
+        return this.isAssignedTeacher(requestorId, studentId);
+      case UserRole.THERAPIST:
+        return this.hasTherapistAccess(requestorId, studentId);
+      case UserRole.ADMIN:
+        return this.hasAdminRights(requestorId);
+      default:
+        return false;
+    }
+  }
+}
+```
+
+### Data Retention & Deletion
+```typescript
+// ✅ Automatic data lifecycle management
+interface DataRetentionPolicy {
+  readonly dataType: 'pii' | 'educational' | 'behavioral' | 'communication';
+  readonly retentionPeriod: number; // days
+  readonly requiresParentalConsent: boolean;
+  readonly autoDeleteAfterInactivity: number; // days
+}
+
+const RETENTION_POLICIES: Record<string, DataRetentionPolicy> = {
+  studentProgress: {
+    dataType: 'educational',
+    retentionPeriod: 2555, // 7 years (FERPA requirement)
+    requiresParentalConsent: false,
+    autoDeleteAfterInactivity: 1095 // 3 years
+  },
+  emotionalData: {
+    dataType: 'behavioral', 
+    retentionPeriod: 90, // 90 days max
+    requiresParentalConsent: true,
+    autoDeleteAfterInactivity: 30
+  }
+};
+```
+
+### Audit Logging
+```typescript
+// ✅ Comprehensive audit trail
+interface DataAccessLog {
+  readonly timestamp: Date;
+  readonly userId: string;
+  readonly userRole: UserRole;
+  readonly action: 'read' | 'write' | 'delete' | 'export';
+  readonly dataType: string;
+  readonly studentId?: string;
+  readonly ipAddress: string;
+  readonly sessionId: string;
+  readonly successful: boolean;
+  readonly failureReason?: string;
+}
+
+// All data access must be logged
+function logDataAccess(log: DataAccessLog): void {
+  // Store in immutable audit log
+  // Never delete audit logs
+  // Regular compliance reporting
+}
+```
+
+## Security Requirements
+
+### Encryption Standards
+- **At Rest**: AES-256 encryption for all PII and educational records
+- **In Transit**: TLS 1.3 minimum for all data transmission
+- **Application Level**: Additional encryption for sensitive fields
+- **Key Management**: Secure key rotation and hardware security modules
+
+### Authentication & Authorization
+```typescript
+// ✅ Multi-factor authentication for sensitive roles
+interface AuthenticationRequirements {
+  readonly role: UserRole;
+  readonly requiresMFA: boolean;
+  readonly sessionTimeout: number; // minutes
+  readonly requiresReauth: boolean; // for sensitive operations
+}
+
+const AUTH_REQUIREMENTS: Record<UserRole, AuthenticationRequirements> = {
+  [UserRole.STUDENT]: {
+    role: UserRole.STUDENT,
+    requiresMFA: false,
+    sessionTimeout: 60,
+    requiresReauth: false
+  },
+  [UserRole.THERAPIST]: {
+    role: UserRole.THERAPIST,
+    requiresMFA: true,
+    sessionTimeout: 30,
+    requiresReauth: true
+  }
+};
+```
+
+### Data Minimization
+```typescript
+// ✅ Collect only necessary data
+interface DataCollectionPrinciples {
+  // Only collect data directly related to educational goals
+  // Obtain specific consent for behavioral/emotional tracking
+  // Regular review and purging of unnecessary data
+  // User-initiated data deletion options
+}
+
+// ❌ Avoid collecting
+const FORBIDDEN_DATA = [
+  'religious_affiliation',
+  'political_views', 
+  'family_income',
+  'medical_diagnosis', // Unless explicitly consented by medical professional
+  'biometric_data',    // Unless essential and consented
+  'location_data'      // Unless necessary for service delivery
+];
+```
+
+## Parental Rights & Controls
+- **Consent Management**: Granular consent for different data types
+- **Data Access**: Parents can view all data collected about their child
+- **Data Portability**: Export student data in standard formats
+- **Deletion Rights**: Parents can request complete data deletion
+- **Notification**: Alert parents of any data breaches or policy changes
+
+## Required Documentation
+- Privacy Policy (child-friendly version)
+- Data Processing Agreement
+- Consent Forms (age-appropriate)
+- Data Breach Response Plan
+- Regular Privacy Impact Assessments
+
+## Development Checklist
+- [ ] All database queries use parameterized statements
+- [ ] PII fields are encrypted before database storage
+- [ ] Data access is logged and monitored
+- [ ] User consent is verified before data collection
+- [ ] Data retention policies are enforced automatically
+- [ ] Regular security audits and penetration testing
+- [ ] Staff training on privacy requirements completed

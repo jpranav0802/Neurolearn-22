@@ -1,0 +1,550 @@
+---
+globs: *.ts,*.js,routes/**/*,controllers/**/*,services/**/*,middleware/**/*
+description: Backend API development standards for educational platform compliance
+---
+
+# Backend API Development Standards
+
+## Educational Platform Requirements
+- **FERPA Compliance**: All educational record APIs must meet federal requirements
+- **COPPA Compliance**: Special handling for users under 13
+- **Real-time Adaptation**: APIs must support low-latency learning adjustments
+- **Multi-tenant Architecture**: Secure data isolation between schools/families
+- **Audit Logging**: Complete traceability of all educational data access
+
+## API Design Principles
+
+### RESTful Educational Resources
+```typescript
+// ✅ Education-focused API structure
+interface StudentProgressAPI {
+  // GET /api/v1/students/:studentId/progress
+  getProgress(studentId: string, timeframe?: 'day' | 'week' | 'month'): Promise<ProgressData>;
+  
+  // POST /api/v1/students/:studentId/progress/lessons/:lessonId
+  recordLessonCompletion(studentId: string, lessonId: string, data: LessonCompletionData): Promise<void>;
+  
+  // GET /api/v1/students/:studentId/adaptations
+  getAdaptationHistory(studentId: string): Promise<AdaptationRecord[]>;
+  
+  // PUT /api/v1/students/:studentId/emotional-state
+  updateEmotionalState(studentId: string, state: EmotionalStateData): Promise<void>;
+}
+
+// ✅ Multi-role access patterns
+interface RoleBasedEndpoints {
+  // Student endpoints
+  'GET /api/v1/my/lessons': StudentLessonData[];
+  'GET /api/v1/my/progress': StudentProgressSummary;
+  'POST /api/v1/my/emotional-check': EmotionalCheckResponse;
+  
+  // Parent endpoints  
+  'GET /api/v1/children/:childId/progress': DetailedProgressReport;
+  'GET /api/v1/children/:childId/communications': TeacherCommunications[];
+  'PUT /api/v1/children/:childId/settings': StudentSettings;
+  
+  // Educator endpoints
+  'GET /api/v1/classroom/students': ClassroomStudentList;
+  'GET /api/v1/students/:id/detailed-analytics': TherapeuticAnalytics;
+  'POST /api/v1/students/:id/intervention': InterventionPlan;
+}
+```
+
+### Authentication & Authorization
+```typescript
+// ✅ Multi-role authentication system
+import jwt from 'jsonwebtoken';
+import { Request, Response, NextFunction } from 'express';
+
+interface AuthenticatedUser {
+  id: string;
+  role: 'student' | 'parent' | 'teacher' | 'therapist' | 'admin';
+  permissions: Permission[];
+  organizationId?: string;
+  studentIds?: string[]; // For parents - children they can access
+  classroomIds?: string[]; // For teachers - classes they manage
+}
+
+interface Permission {
+  resource: string;
+  actions: ('read' | 'write' | 'delete')[];
+  conditions?: Record<string, any>;
+}
+
+class AuthMiddleware {
+  static authenticate = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const token = req.headers.authorization?.replace('Bearer ', '');
+      if (!token) {
+        return res.status(401).json({ error: 'Authentication required' });
+      }
+
+      const decoded = jwt.verify(token, process.env.JWT_SECRET!) as AuthenticatedUser;
+      
+      // Special handling for student sessions (COPPA compliance)
+      if (decoded.role === 'student') {
+        await AuthMiddleware.validateStudentSession(decoded);
+      }
+      
+      req.user = decoded;
+      next();
+    } catch (error) {
+      return res.status(401).json({ error: 'Invalid authentication' });
+    }
+  };
+
+  static authorize = (requiredPermission: string, requiredAction: string) => {
+    return (req: Request, res: Response, next: NextFunction) => {
+      const user = req.user as AuthenticatedUser;
+      
+      const hasPermission = user.permissions.some(permission => 
+        permission.resource === requiredPermission &&
+        permission.actions.includes(requiredAction as any)
+      );
+
+      if (!hasPermission) {
+        return res.status(403).json({ 
+          error: 'Insufficient permissions',
+          required: { resource: requiredPermission, action: requiredAction }
+        });
+      }
+
+      next();
+    };
+  };
+
+  static validateStudentDataAccess = (req: Request, res: Response, next: NextFunction) => {
+    const user = req.user as AuthenticatedUser;
+    const studentId = req.params.studentId;
+
+    switch (user.role) {
+      case 'student':
+        if (user.id !== studentId) {
+          return res.status(403).json({ error: 'Can only access own data' });
+        }
+        break;
+      case 'parent':
+        if (!user.studentIds?.includes(studentId)) {
+          return res.status(403).json({ error: 'Not authorized for this student' });
+        }
+        break;
+      case 'teacher':
+        // Verify teacher has access to this student
+        if (!AuthService.teacherHasStudentAccess(user.id, studentId)) {
+          return res.status(403).json({ error: 'Not your student' });
+        }
+        break;
+    }
+
+    next();
+  };
+}
+```
+
+### Data Validation & Sanitization
+```typescript
+// ✅ Educational data validation
+import { body, param, query, validationResult } from 'express-validator';
+import xss from 'xss';
+
+class EducationalValidators {
+  // Student progress validation
+  static lessonCompletion = [
+    param('studentId').isUUID().withMessage('Invalid student ID'),
+    param('lessonId').isUUID().withMessage('Invalid lesson ID'),
+    body('score').isFloat({ min: 0, max: 1 }).withMessage('Score must be between 0 and 1'),
+    body('timeSpent').isInt({ min: 1 }).withMessage('Time spent must be positive'),
+    body('helpRequests').isInt({ min: 0 }).withMessage('Help requests must be non-negative'),
+    body('emotionalState.stressLevel').isInt({ min: 1, max: 5 }).withMessage('Stress level 1-5'),
+    body('adaptations').optional().isArray().withMessage('Adaptations must be an array'),
+  ];
+
+  // Emotional state validation  
+  static emotionalStateUpdate = [
+    param('studentId').isUUID(),
+    body('mood').isIn(['happy', 'neutral', 'frustrated', 'excited', 'overwhelmed', 'calm']),
+    body('stressLevel').isInt({ min: 1, max: 5 }),
+    body('engagementLevel').isInt({ min: 1, max: 5 }),
+    body('triggers').optional().isArray().custom((triggers) => {
+      const allowedTriggers = ['noise', 'visual_overload', 'time_pressure', 'social_interaction'];
+      return triggers.every((trigger: string) => allowedTriggers.includes(trigger));
+    }),
+  ];
+
+  // Content sanitization for user-generated content
+  static sanitizeInput = (req: Request, res: Response, next: NextFunction) => {
+    const sanitizeObject = (obj: any): any => {
+      if (typeof obj === 'string') {
+        return xss(obj, {
+          whiteList: {}, // No HTML allowed in educational data
+          stripIgnoreTag: true,
+          stripIgnoreTagBody: ['script']
+        });
+      }
+      if (Array.isArray(obj)) {
+        return obj.map(sanitizeObject);
+      }
+      if (obj && typeof obj === 'object') {
+        const sanitized: any = {};
+        for (const [key, value] of Object.entries(obj)) {
+          sanitized[key] = sanitizeObject(value);
+        }
+        return sanitized;
+      }
+      return obj;
+    };
+
+    req.body = sanitizeObject(req.body);
+    next();
+  };
+}
+```
+
+### Educational Data Models
+```typescript
+// ✅ Comprehensive educational data structures
+interface StudentLearningProfile {
+  readonly id: string;
+  readonly studentId: string;
+  learningStyles: {
+    primary: 'visual' | 'auditory' | 'kinesthetic' | 'reading_writing';
+    secondary?: 'visual' | 'auditory' | 'kinesthetic' | 'reading_writing';
+    effectiveness: Record<string, number>; // 0-1 scale
+  };
+  cognitiveProfile: {
+    processingSpeed: 'slow' | 'average' | 'fast';
+    workingMemoryCapacity: 'low' | 'average' | 'high';
+    attentionSpan: number; // minutes
+    executiveFunctionLevel: 'emerging' | 'developing' | 'proficient';
+  };
+  sensoryProfile: {
+    visualSensitivity: 'low' | 'typical' | 'high';
+    auditorySensitivity: 'low' | 'typical' | 'high';
+    tactileSensitivity: 'low' | 'typical' | 'high';
+    vestibularNeeds: 'low' | 'typical' | 'high';
+    proprioceptiveNeeds: 'low' | 'typical' | 'high';
+  };
+  communicationProfile: {
+    expressiveLanguage: 'emerging' | 'developing' | 'proficient' | 'advanced';
+    receptiveLanguage: 'emerging' | 'developing' | 'proficient' | 'advanced';
+    socialCommunication: 'emerging' | 'developing' | 'proficient' | 'advanced';
+    augmentativeSupport?: 'none' | 'pictures' | 'symbols' | 'text_to_speech' | 'sign_language';
+  };
+  lastUpdated: Date;
+  updatedBy: string; // Professional who updated the profile
+}
+
+interface LearningSession {
+  readonly id: string;
+  readonly studentId: string;
+  readonly lessonId: string;
+  startTime: Date;
+  endTime?: Date;
+  interactions: LearningInteraction[];
+  adaptations: AdaptationEvent[];
+  outcomes: SessionOutcome;
+  emotionalJourney: EmotionalDataPoint[];
+  supportProvided: SupportEvent[];
+}
+
+interface LearningInteraction {
+  readonly id: string;
+  timestamp: Date;
+  type: 'click' | 'drag' | 'type' | 'speak' | 'gesture' | 'eye_gaze';
+  element: string; // UI element identifier
+  correct: boolean;
+  responseTime: number; // milliseconds
+  confidence?: number; // 0-1 scale
+  assistanceLevel: 'independent' | 'verbal_prompt' | 'visual_prompt' | 'physical_prompt';
+}
+
+interface AdaptationEvent {
+  readonly id: string;
+  timestamp: Date;
+  trigger: 'performance' | 'emotional_state' | 'time_on_task' | 'request_help' | 'manual';
+  adaptationType: 'difficulty' | 'presentation_mode' | 'scaffolding' | 'break' | 'reinforcement';
+  before: any; // Previous state
+  after: any; // New state
+  reasoning: string; // AI or human reasoning
+  effectiveness?: number; // 0-1 scale, measured post-adaptation
+}
+```
+
+### Real-time Learning Analytics
+```typescript
+// ✅ Real-time educational analytics API
+import { Server as SocketServer } from 'socket.io';
+import Redis from 'ioredis';
+
+class LearningAnalyticsService {
+  private redis: Redis;
+  private io: SocketServer;
+
+  constructor(io: SocketServer, redis: Redis) {
+    this.io = io;
+    this.redis = redis;
+  }
+
+  async trackLearningProgress(studentId: string, sessionData: LearningSession): Promise<void> {
+    // Store in database
+    await this.storeLearningSession(sessionData);
+    
+    // Real-time analytics
+    const analytics = await this.calculateRealTimeAnalytics(studentId, sessionData);
+    
+    // Notify stakeholders
+    await this.notifyStakeholders(studentId, analytics);
+    
+    // Check for intervention triggers
+    const interventionNeeded = await this.checkInterventionTriggers(studentId, analytics);
+    if (interventionNeeded) {
+      await this.triggerIntervention(studentId, interventionNeeded);
+    }
+  }
+
+  private async calculateRealTimeAnalytics(
+    studentId: string, 
+    session: LearningSession
+  ): Promise<RealTimeAnalytics> {
+    const recentSessions = await this.getRecentSessions(studentId, 7); // Last 7 days
+    
+    return {
+      currentEngagement: this.calculateEngagement(session),
+      progressVelocity: this.calculateProgressVelocity(recentSessions),
+      strugglingAreas: this.identifyStrugglePatterns(recentSessions),
+      emotionalTrends: this.analyzeEmotionalPatterns(recentSessions),
+      adaptationEffectiveness: this.measureAdaptationSuccess(recentSessions),
+      recommendedInterventions: await this.generateInterventionRecommendations(studentId, recentSessions)
+    };
+  }
+
+  private async notifyStakeholders(studentId: string, analytics: RealTimeAnalytics): Promise<void> {
+    // Notify parents (if enabled in settings)
+    const parentSettings = await this.getParentNotificationSettings(studentId);
+    if (parentSettings.realTimeUpdates) {
+      this.io.to(`parent:${studentId}`).emit('progress_update', {
+        studentId,
+        summary: this.createParentFriendlySummary(analytics),
+        timestamp: new Date()
+      });
+    }
+
+    // Notify teachers (classroom view)
+    this.io.to(`teacher:${studentId}`).emit('student_progress', {
+      studentId,
+      analytics,
+      alerts: this.generateTeacherAlerts(analytics),
+      timestamp: new Date()
+    });
+
+    // Notify therapists (if assigned)
+    const therapistIds = await this.getAssignedTherapists(studentId);
+    therapistIds.forEach(therapistId => {
+      this.io.to(`therapist:${therapistId}`).emit('client_update', {
+        studentId,
+        therapeuticInsights: this.generateTherapeuticInsights(analytics),
+        timestamp: new Date()
+      });
+    });
+  }
+}
+```
+
+### Compliance & Audit Logging
+```typescript
+// ✅ Comprehensive audit logging for educational compliance
+interface AuditLogEntry {
+  readonly id: string;
+  timestamp: Date;
+  userId: string;
+  userRole: string;
+  action: string;
+  resource: string;
+  resourceId: string;
+  ipAddress: string;
+  userAgent: string;
+  sessionId: string;
+  dataAccessed?: string[]; // Fields accessed
+  dataModified?: Record<string, { before: any; after: any }>;
+  complianceRelevant: boolean;
+  retentionPeriod: number; // days
+  classification: 'public' | 'internal' | 'confidential' | 'restricted';
+}
+
+class ComplianceAuditLogger {
+  static async logDataAccess(
+    user: AuthenticatedUser,
+    resource: string,
+    resourceId: string,
+    action: 'read' | 'write' | 'delete' | 'export',
+    req: Request,
+    dataDetails?: any
+  ): Promise<void> {
+    const auditEntry: AuditLogEntry = {
+      id: uuidv4(),
+      timestamp: new Date(),
+      userId: user.id,
+      userRole: user.role,
+      action,
+      resource,
+      resourceId,
+      ipAddress: req.ip || req.connection.remoteAddress || 'unknown',
+      userAgent: req.get('User-Agent') || 'unknown',
+      sessionId: req.sessionID || 'unknown',
+      dataAccessed: dataDetails?.fieldsAccessed,
+      dataModified: dataDetails?.modifications,
+      complianceRelevant: this.isComplianceRelevant(resource, action),
+      retentionPeriod: this.calculateRetentionPeriod(resource, user.role),
+      classification: this.classifyData(resource, action)
+    };
+
+    // Store in immutable audit log
+    await AuditLogRepository.store(auditEntry);
+
+    // Real-time compliance monitoring
+    await this.checkComplianceViolations(auditEntry);
+  }
+
+  private static isComplianceRelevant(resource: string, action: string): boolean {
+    const complianceResources = [
+      'student_progress',
+      'behavioral_data', 
+      'emotional_state',
+      'communication_records',
+      'assessment_results',
+      'intervention_plans'
+    ];
+    
+    return complianceResources.includes(resource) || action === 'export';
+  }
+
+  private static calculateRetentionPeriod(resource: string, userRole: string): number {
+    // FERPA requires 7-year retention for educational records
+    if (resource.includes('educational') || resource.includes('progress')) {
+      return 2555; // 7 years
+    }
+    
+    // Behavioral data retention varies by purpose
+    if (resource.includes('behavioral') || resource.includes('emotional')) {
+      return userRole === 'therapist' ? 365 : 90; // 1 year for therapeutic, 90 days for educational
+    }
+    
+    // Default audit retention
+    return 1095; // 3 years
+  }
+}
+```
+
+## API Performance & Scalability
+
+### Caching Strategy
+```typescript
+// ✅ Educational-specific caching patterns
+import Redis from 'ioredis';
+
+class EducationalCacheService {
+  private redis: Redis;
+
+  constructor() {
+    this.redis = new Redis(process.env.REDIS_URL);
+  }
+
+  // Cache student learning profiles (update frequency: weekly)
+  async cacheStudentProfile(studentId: string, profile: StudentLearningProfile): Promise<void> {
+    await this.redis.setex(
+      `profile:${studentId}`, 
+      604800, // 1 week
+      JSON.stringify(profile)
+    );
+  }
+
+  // Cache lesson content (static, long-term cache)
+  async cacheLessonContent(lessonId: string, content: LessonContent): Promise<void> {
+    await this.redis.setex(
+      `lesson:${lessonId}`,
+      2592000, // 30 days
+      JSON.stringify(content)
+    );
+  }
+
+  // Cache real-time adaptation state (short-term, session-based)
+  async cacheAdaptationState(sessionId: string, state: AdaptationState): Promise<void> {
+    await this.redis.setex(
+      `adaptation:${sessionId}`,
+      3600, // 1 hour
+      JSON.stringify(state)
+    );
+  }
+}
+```
+
+### Rate Limiting for Educational APIs
+```typescript
+// ✅ Educational-context rate limiting
+import rateLimit from 'express-rate-limit';
+
+const createEducationalRateLimiter = (role: string) => {
+  const limits = {
+    student: { windowMs: 15 * 60 * 1000, max: 1000 }, // Students: 1000 requests per 15 minutes
+    teacher: { windowMs: 15 * 60 * 1000, max: 5000 }, // Teachers: Higher limit for classroom management
+    parent: { windowMs: 15 * 60 * 1000, max: 500 },   // Parents: Moderate limit
+    therapist: { windowMs: 15 * 60 * 1000, max: 2000 }, // Therapists: Higher for data analysis
+  };
+
+  return rateLimit({
+    windowMs: limits[role as keyof typeof limits].windowMs,
+    max: limits[role as keyof typeof limits].max,
+    message: {
+      error: 'Too many requests',
+      retryAfter: '15 minutes',
+      role: role
+    },
+    standardHeaders: true,
+    legacyHeaders: false,
+  });
+};
+```
+
+## Error Handling & Monitoring
+
+### Educational-Context Error Responses
+```typescript
+// ✅ Child-friendly error handling
+class EducationalErrorHandler {
+  static handleStudentFacingError(error: Error, res: Response): void {
+    // Never expose technical details to students
+    const friendlyMessage = this.createChildFriendlyMessage(error);
+    
+    res.status(500).json({
+      message: friendlyMessage,
+      suggestion: "Let's try that again! If you need help, ask your teacher.",
+      canRetry: true,
+      showBreakOption: true // Always offer a break for overwhelmed students
+    });
+  }
+
+  static handleEducatorError(error: Error, res: Response): void {
+    // More detailed for educators, but still professional
+    res.status(500).json({
+      message: error.message,
+      context: 'educational_platform',
+      supportContact: 'support@neurolearn.edu',
+      documentationLink: '/docs/troubleshooting'
+    });
+  }
+
+  private static createChildFriendlyMessage(error: Error): string {
+    const friendlyMessages = {
+      'network_error': "Oops! There's a little hiccup with the internet.",
+      'save_error': "Your work is important! Let's try saving again.",
+      'load_error': "The lesson is taking a moment to get ready.",
+      'default': "Something unexpected happened, but it's not your fault!"
+    };
+
+    const errorType = this.categorizeError(error);
+    return friendlyMessages[errorType] || friendlyMessages.default;
+  }
+}
+```
+
+These Cursor Rules provide comprehensive guidance for building the NeuroLearn platform with proper educational compliance, accessibility standards, and neurodiverse-friendly development practices. Each rule focuses on the specific requirements for building an effective educational technology platform for students with autism.

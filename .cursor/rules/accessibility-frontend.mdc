@@ -1,0 +1,117 @@
+---
+globs: *.tsx,*.ts,*.jsx,*.js,*.css,*.scss
+---
+
+# Accessibility & Sensory-Friendly Frontend Development
+
+## Mandatory Accessibility Standards
+- **WCAG 2.1 AA Compliance**: All interactive elements must meet minimum standards
+- **WCAG 2.1 AAA Target**: Strive for AAA compliance for neurodiverse users
+- **Keyboard Navigation**: All functionality accessible via keyboard only
+- **Screen Reader Support**: Proper ARIA labels, roles, and descriptions
+
+## Required Implementation Patterns
+
+### Semantic HTML & ARIA
+```tsx
+// ✅ Good - Semantic structure with ARIA
+<button 
+  aria-label="Start math lesson about shapes"
+  aria-describedby="lesson-description"
+  onClick={startLesson}
+>
+  Start Lesson
+</button>
+
+// ❌ Bad - Non-semantic, no ARIA
+<div onClick={startLesson}>Start</div>
+```
+
+### Sensory Customization Requirements
+- **Brightness Control**: All components must respect brightness settings
+- **Animation Controls**: Provide options to reduce/disable animations
+- **Sound Management**: Volume controls and audio descriptions
+- **Focus Management**: Clear focus indicators, logical tab order
+
+### Color & Contrast
+```css
+/* Minimum contrast ratios */
+/* Normal text: 4.5:1 */
+/* Large text: 3:1 */
+/* Interactive elements: 3:1 */
+
+/* Use semantic color variables */
+:root {
+  --color-primary: #F4B942; /* High contrast yellow */
+  --color-success: #A8B5A0; /* Calming green */
+  --color-focus: #0066CC;   /* Strong blue for focus */
+  --color-error: #D73502;   /* Clear error red */
+}
+```
+
+### Motion & Animation Guidelines
+```tsx
+// ✅ Respect prefers-reduced-motion
+const AnimatedCard = ({ children }) => {
+  const prefersReducedMotion = useReducedMotion();
+  
+  return (
+    <motion.div
+      animate={prefersReducedMotion ? {} : { scale: 1.02 }}
+      transition={{ duration: prefersReducedMotion ? 0 : 0.3 }}
+    >
+      {children}
+    </motion.div>
+  );
+};
+```
+
+### Form Accessibility
+```tsx
+// ✅ Complete form accessibility
+<div className="form-field">
+  <label htmlFor="student-name" className="required">
+    Student Name
+  </label>
+  <input
+    id="student-name"
+    type="text"
+    aria-required="true"
+    aria-describedby="name-help name-error"
+    aria-invalid={hasError}
+  />
+  <div id="name-help" className="help-text">
+    Enter the student's preferred name
+  </div>
+  {hasError && (
+    <div id="name-error" className="error-text" role="alert">
+      Name is required
+    </div>
+  )}
+</div>
+```
+
+## Component Development Standards
+
+### Emotional State Integration
+- All interactive components should check for current emotional state
+- Adapt UI intensity based on stress/overwhelm indicators
+- Provide calm-down options and break suggestions
+
+### Multi-Modal Support
+- Visual: High contrast, clear icons, progress indicators
+- Auditory: Audio descriptions, text-to-speech integration
+- Kinesthetic: Touch/drag interactions, gesture support
+
+### Error Handling
+- Clear, non-alarming error messages
+- Visual and auditory error indication
+- Recovery suggestions and help options
+- Never use red alone to indicate errors
+
+## Testing Requirements
+- Automated accessibility testing with axe-core
+- Manual keyboard navigation testing
+- Screen reader testing (NVDA, JAWS, VoiceOver)
+- Color blindness simulation testing
+- Stress testing with sensory settings variations

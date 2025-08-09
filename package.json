@@ -1,0 +1,67 @@
+{
+  "name": "neurolearn",
+  "version": "1.0.0",
+  "description": "AI-powered educational platform for neurodiverse students",
+  "main": "index.js",
+  "scripts": {
+    "install:all": "npm run install:frontend && npm run install:backend && npm run install:ai",
+    "install:frontend": "cd frontend/student-app && npm install && cd ../parent-dashboard && npm install && cd ../educator-portal && npm install && cd ../shared && npm install",
+    "install:backend": "cd backend/auth-service && npm install && cd ../learning-engine && npm install && cd ../content-service && npm install && cd ../analytics-service && npm install",
+    "install:ai": "cd ai-services/adaptation-engine && pip install -r requirements.txt && cd ../behavior-analysis && pip install -r requirements.txt && cd ../content-generation && pip install -r requirements.txt",
+    "dev": "concurrently \"npm run dev:frontend\" \"npm run dev:backend\" \"npm run dev:ai\"",
+    "dev:frontend": "concurrently \"cd frontend/student-app && npm run dev\" \"cd frontend/parent-dashboard && npm run dev\" \"cd frontend/educator-portal && npm run dev\"",
+    "dev:backend": "concurrently \"cd backend/auth-service && npm run dev\" \"cd backend/learning-engine && npm run dev\" \"cd backend/content-service && npm run dev\" \"cd backend/analytics-service && npm run dev\"",
+    "dev:ai": "concurrently \"cd ai-services/adaptation-engine && python main.py\" \"cd ai-services/behavior-analysis && python main.py\" \"cd ai-services/content-generation && python main.py\"",
+    "build": "npm run build:frontend && npm run build:backend",
+    "build:frontend": "cd frontend/student-app && npm run build && cd ../parent-dashboard && npm run build && cd ../educator-portal && npm run build",
+    "build:backend": "cd backend/auth-service && npm run build && cd ../learning-engine && npm run build && cd ../content-service && npm run build && cd ../analytics-service && npm run build",
+    "test": "npm run test:frontend && npm run test:backend && npm run test:ai",
+    "test:frontend": "cd frontend/student-app && npm test && cd ../parent-dashboard && npm test && cd ../educator-portal && npm test && cd ../shared && npm test",
+    "test:backend": "cd backend/auth-service && npm test && cd ../learning-engine && npm test && cd ../content-service && npm test && cd ../analytics-service && npm test",
+    "test:ai": "cd ai-services/adaptation-engine && python -m pytest && cd ../behavior-analysis && python -m pytest && cd ../content-generation && python -m pytest",
+    "test:accessibility": "cd frontend/shared && npm run test:a11y",
+    "lint": "npm run lint:frontend && npm run lint:backend && npm run lint:ai",
+    "lint:frontend": "cd frontend/shared && eslint . --ext .ts,.tsx,.js,.jsx",
+    "lint:backend": "cd backend && eslint . --ext .ts,.js",
+    "lint:ai": "cd ai-services && flake8 . && black --check .",
+    "docker:build": "docker-compose build",
+    "docker:up": "docker-compose up -d",
+    "docker:down": "docker-compose down",
+    "db:migrate": "cd backend/auth-service && npm run db:migrate",
+    "db:seed": "cd backend/auth-service && npm run db:seed",
+    "start:prod": "docker-compose -f docker-compose.prod.yml up -d"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/your-org/neurolearn.git"
+  },
+  "keywords": [
+    "education",
+    "autism",
+    "accessibility",
+    "ai",
+    "neurodiverse",
+    "edtech",
+    "learning",
+    "adaptive"
+  ],
+  "author": "NeuroLearn Team",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/your-org/neurolearn/issues"
+  },
+  "homepage": "https://github.com/your-org/neurolearn#readme",
+  "devDependencies": {
+    "concurrently": "^8.2.2",
+    "husky": "^8.0.3",
+    "lint-staged": "^15.2.0"
+  },
+  "workspaces": [
+    "frontend/*",
+    "backend/*"
+  ],
+  "engines": {
+    "node": ">=18.0.0",
+    "npm": ">=8.0.0"
+  }
+}

@@ -1,0 +1,420 @@
+// Prisma schema for NeuroLearn Authentication Service
+// Designed for COPPA/FERPA compliance with encrypted PII
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// Users table - Core authentication data
+model User {
+  id                        String    @id @default(uuid())
+  email                     String    @unique
+  encryptedPasswordHash     String
+  role                      UserRole
+  firstNameEncrypted        String?   // Encrypted PII
+  lastNameEncrypted         String?   // Encrypted PII
+  dateOfBirthEncrypted      String?   // Encrypted PII for COPPA compliance
+  organizationId            String?
+  
+  // Account status
+  isActive                  Boolean   @default(true)
+  emailVerified             Boolean   @default(false)
+  emailVerifiedAt           DateTime?
+  requiresParentalConsent   Boolean   @default(false)
+  parentEmail               String?   // For COPPA compliance
+  
+  // Security
+  mfaSecret                 String?   // For MFA-required roles
+  mfaBackupCodes            String[]  // Encrypted backup codes
+  mfaEnabled                Boolean   @default(false)
+  
+  // Compliance
+  termsAcceptedAt           DateTime?
+  privacyPolicyAcceptedAt   DateTime?
+  
+  // Timestamps
+  createdAt                 DateTime  @default(now())
+  updatedAt                 DateTime  @updatedAt
+  lastLoginAt               DateTime?
+  
+  // Relations
+  studentProfile            StudentProfile?
+  sentCommunications        Communication[] @relation("SentCommunications")
+  receivedCommunications    Communication[] @relation("ReceivedCommunications")
+  stakeholderRelationships  StakeholderRelationship[] @relation("PrimaryUser")
+  
+  @@map("users")
+}
+
+// Student profiles - Extended data for neurodiverse learners
+model StudentProfile {
+  id                        String    @id @default(uuid())
+  userId                    String    @unique
+  user                      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  // Learning characteristics
+  primaryLearningStyle      LearningStyle?
+  secondaryLearningStyle    LearningStyle?
+  currentDifficultyLevel    Int?      @default(2) // 1=emerging, 2=developing, 3=proficient, 4=advanced
+  attentionSpanMinutes      Int?
+  emotionalRegulationLevel  Int?      // 1-5 scale
+  processingSpeed           Float?    // Relative to age group
+  
+  // Communication profile
+  communicationLevel        CommunicationLevel?
+  supportNeeds              SupportLevel?
+  
+  // Metadata
+  createdAt                 DateTime  @default(now())
+  updatedAt                 DateTime  @updatedAt
+  updatedBy                 String?   // Professional who updated the profile
+  
+  // Relations
+  sensoryPreferences        SensoryPreferences?
+  learningSessions          LearningSession[]
+  studentProgress           StudentProgress[]
+  stakeholderRelationships  StakeholderRelationship[] @relation("Student")
+  
+  @@map("student_profiles")
+}
+
+// Sensory preferences for autism-specific customizations
+model SensoryPreferences {
+  id                        String    @id @default(uuid())
+  studentProfileId          String    @unique
+  studentProfile            StudentProfile @relation(fields: [studentProfileId], references: [id], onDelete: Cascade)
+  
+  // Sensory sensitivities
+  visualSensitivity         SensitivityLevel?
+  auditorySensitivity       SensitivityLevel?
+  tactileSensitivity        SensitivityLevel?
+  vestibularNeeds           SensitivityLevel?
+  proprioceptiveNeeds       SensitivityLevel?
+  
+  // Interface preferences
+  brightnessPreference      Float?    @default(0.8) // 0.1-1.0 scale
+  soundVolumePreference     Float?    @default(0.6) // 0.0-1.0 scale
+  reduceAnimations          Boolean   @default(false)
+  backgroundNoiseTolerance  Boolean   @default(false)
+  
+  createdAt                 DateTime  @default(now())
+  updatedAt                 DateTime  @updatedAt
+  
+  @@map("sensory_preferences")
+}
+
+// Learning content and lessons
+model LearningLesson {
+  id                        String    @id @default(uuid())
+  title                     String
+  description               String?
+  subjectArea               String
+  difficultyLevel           Int       // 1-4 scale
+  estimatedDurationMinutes  Int?
+  learningObjectives        Json?     // Array of learning goals
+  contentMetadata           Json?     // Flexible content structure
+  accessibilityFeatures     Json?     // WCAG compliance features
+  sensoryConsiderations     Json?     // Autism-specific adaptations
+  
+  isActive                  Boolean   @default(true)
+  createdAt                 DateTime  @default(now())
+  updatedAt                 DateTime  @updatedAt
+  createdBy                 String?   // Creator user ID
+  
+  // Relations
+  learningSessions          LearningSession[]
+  studentProgress           StudentProgress[]
+  
+  @@map("learning_lessons")
+}
+
+// Learning sessions - Individual student interactions
+model LearningSession {
+  id                        String    @id @default(uuid())
+  studentId                 String
+  student                   StudentProfile @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  lessonId                  String?
+  lesson                    LearningLesson? @relation(fields: [lessonId], references: [id])
+  
+  startedAt                 DateTime  @default(now())
+  endedAt                   DateTime?
+  completionStatus          CompletionStatus @default(STARTED)
+  performanceScore          Float?    // 0-1 scale
+  timeOnTaskPercentage      Float?    // 0-1 scale
+  helpRequestsCount         Int       @default(0)
+  hintUsageCount            Int       @default(0)
+  breakRequestsCount        Int       @default(0)
+  sessionNotes              String?
+  
+  createdAt                 DateTime  @default(now())
+  
+  // Relations
+  emotionalStates           EmotionalState[]
+  learningInteractions      LearningInteraction[]
+  aiAdaptations             AIAdaptation[]
+  
+  @@map("learning_sessions")
+}
+
+// Emotional state tracking for intervention
+model EmotionalState {
+  id                        String    @id @default(uuid())
+  sessionId                 String
+  session                   LearningSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  
+  timestamp                 DateTime  @default(now())
+  stressLevel               Int       // 1-5 scale
+  engagementLevel           Int       // 1-5 scale
+  frustrationIndicators     Json?     // Array of frustration signals
+  triggerEvents             Json?     // Environmental or content triggers
+  interventionSuggested     Boolean   @default(false)
+  interventionType          String?
+  effectivenessRating       Int?      // 1-5 scale, post-intervention
+  
+  @@map("emotional_states")
+}
+
+// Detailed interaction tracking
+model LearningInteraction {
+  id                        String    @id @default(uuid())
+  sessionId                 String
+  session                   LearningSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  
+  timestamp                 DateTime  @default(now())
+  interactionType           InteractionType
+  elementId                 String?   // UI element identifier
+  isCorrect                 Boolean?
+  responseTimeMs            Int?
+  confidenceLevel           Float?    // 0-1 scale
+  assistanceLevel           AssistanceLevel
+  interactionData           Json?     // Flexible data for different interaction types
+  
+  @@map("learning_interactions")
+}
+
+// AI adaptations with explainability
+model AIAdaptation {
+  id                        String    @id @default(uuid())
+  sessionId                 String
+  session                   LearningSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  
+  timestamp                 DateTime  @default(now())
+  triggerType               TriggerType
+  adaptationType            AdaptationType
+  beforeState               Json?     // Previous configuration
+  afterState                Json?     // New configuration
+  reasoning                 String?   // AI or human reasoning
+  effectivenessScore        Float?    // 0-1 scale, measured post-adaptation
+  appliedBy                 AppliedBy
+  
+  @@map("ai_adaptations")
+}
+
+// Student progress tracking
+model StudentProgress {
+  id                        String    @id @default(uuid())
+  studentId                 String
+  student                   StudentProfile @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  lessonId                  String?
+  lesson                    LearningLesson? @relation(fields: [lessonId], references: [id])
+  
+  subjectArea               String?
+  skillCategory             String?
+  masteryLevel              Float?    // 0-1 scale
+  attemptsCount             Int       @default(0)
+  successfulCompletions     Int       @default(0)
+  averageScore              Float?
+  trendDirection            TrendDirection?
+  lastAttemptAt             DateTime?
+  
+  createdAt                 DateTime  @default(now())
+  updatedAt                 DateTime  @updatedAt
+  
+  @@map("student_progress")
+}
+
+// Stakeholder relationships (parent-child, teacher-student, etc.)
+model StakeholderRelationship {
+  id                        String    @id @default(uuid())
+  primaryUserId             String
+  primaryUser               User      @relation("PrimaryUser", fields: [primaryUserId], references: [id])
+  studentId                 String
+  student                   StudentProfile @relation("Student", fields: [studentId], references: [id])
+  
+  relationshipType          RelationshipType
+  permissions               Json?     // What data they can access
+  isActive                  Boolean   @default(true)
+  
+  createdAt                 DateTime  @default(now())
+  approvedAt                DateTime?
+  approvedBy                String?   // User ID who approved
+  
+  @@map("stakeholder_relationships")
+}
+
+// Communication and messaging
+model Communication {
+  id                        String    @id @default(uuid())
+  senderId                  String
+  sender                    User      @relation("SentCommunications", fields: [senderId], references: [id])
+  recipientId               String
+  recipient                 User      @relation("ReceivedCommunications", fields: [recipientId], references: [id])
+  studentId                 String?   // Context student
+  
+  messageType               MessageType
+  subject                   String?
+  messageContentEncrypted   String    // Encrypted message content
+  isRead                    Boolean   @default(false)
+  priority                  Priority  @default(NORMAL)
+  
+  createdAt                 DateTime  @default(now())
+  readAt                    DateTime?
+  
+  @@map("communications")
+}
+
+// Enums
+enum UserRole {
+  STUDENT
+  PARENT
+  TEACHER
+  THERAPIST
+  ADMIN
+  
+  @@map("user_role")
+}
+
+enum LearningStyle {
+  VISUAL
+  AUDITORY
+  KINESTHETIC
+  MULTIMODAL
+  
+  @@map("learning_style")
+}
+
+enum CommunicationLevel {
+  EMERGING
+  DEVELOPING
+  PROFICIENT
+  ADVANCED
+  
+  @@map("communication_level")
+}
+
+enum SupportLevel {
+  MINIMAL
+  MODERATE
+  SUBSTANTIAL
+  EXTENSIVE
+  
+  @@map("support_level")
+}
+
+enum SensitivityLevel {
+  LOW
+  TYPICAL
+  HIGH
+  
+  @@map("sensitivity_level")
+}
+
+enum CompletionStatus {
+  STARTED
+  IN_PROGRESS
+  COMPLETED
+  ABANDONED
+  
+  @@map("completion_status")
+}
+
+enum InteractionType {
+  CLICK
+  DRAG
+  TYPE
+  SPEAK
+  GESTURE
+  EYE_GAZE
+  
+  @@map("interaction_type")
+}
+
+enum AssistanceLevel {
+  INDEPENDENT
+  VERBAL_PROMPT
+  VISUAL_PROMPT
+  PHYSICAL_PROMPT
+  
+  @@map("assistance_level")
+}
+
+enum TriggerType {
+  PERFORMANCE
+  EMOTIONAL_STATE
+  TIME_ON_TASK
+  REQUEST_HELP
+  MANUAL
+  
+  @@map("trigger_type")
+}
+
+enum AdaptationType {
+  DIFFICULTY
+  PRESENTATION_MODE
+  SCAFFOLDING
+  BREAK
+  REINFORCEMENT
+  
+  @@map("adaptation_type")
+}
+
+enum AppliedBy {
+  AI_ENGINE
+  TEACHER
+  PARENT
+  STUDENT
+  
+  @@map("applied_by")
+}
+
+enum TrendDirection {
+  IMPROVING
+  STABLE
+  DECLINING
+  
+  @@map("trend_direction")
+}
+
+enum RelationshipType {
+  PARENT
+  GUARDIAN
+  TEACHER
+  THERAPIST
+  SUPPORT_STAFF
+  
+  @@map("relationship_type")
+}
+
+enum MessageType {
+  PROGRESS_UPDATE
+  CONCERN
+  CELEBRATION
+  INTERVENTION_PLAN
+  GENERAL
+  
+  @@map("message_type")
+}
+
+enum Priority {
+  LOW
+  NORMAL
+  HIGH
+  URGENT
+  
+  @@map("priority")
+}

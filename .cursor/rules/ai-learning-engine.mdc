@@ -1,0 +1,357 @@
+---
+globs: *.py,*.ipynb,*.ts,*.js
+description: AI and machine learning development standards for adaptive learning features
+---
+
+# AI & Adaptive Learning Engine Development
+
+## Core AI Principles for NeuroLearn
+- **Transparent Algorithms**: All AI decisions must be explainable to educators and parents
+- **Bias Prevention**: Regular testing for bias against neurodiverse learning patterns
+- **Student Agency**: AI suggestions, not replacements for human judgment
+- **Privacy-Preserving**: Federated learning and differential privacy where possible
+
+## Learning Adaptation Architecture
+
+### Real-Time Adaptation Engine
+```python
+# ✅ Structured approach to learning adaptation
+from dataclasses import dataclass
+from typing import Dict, List, Optional
+from enum import Enum
+
+class LearningStyle(Enum):
+    VISUAL = "visual"
+    AUDITORY = "auditory" 
+    KINESTHETIC = "kinesthetic"
+    MULTIMODAL = "multimodal"
+
+class DifficultyLevel(Enum):
+    EMERGING = 1
+    DEVELOPING = 2
+    PROFICIENT = 3
+    ADVANCED = 4
+
+@dataclass
+class StudentLearningProfile:
+    student_id: str
+    primary_learning_style: LearningStyle
+    secondary_learning_style: Optional[LearningStyle]
+    current_difficulty_level: DifficultyLevel
+    attention_span_minutes: int
+    sensory_preferences: Dict[str, any]
+    emotional_regulation_level: int  # 1-5 scale
+    processing_speed: float  # relative to age group
+    
+class AdaptationEngine:
+    def adapt_content(self, 
+                     profile: StudentLearningProfile,
+                     current_performance: Dict,
+                     emotional_state: Dict) -> Dict:
+        """
+        Real-time content adaptation based on student state
+        """
+        adaptations = {}
+        
+        # Adjust difficulty based on performance
+        if current_performance.get('error_rate', 0) > 0.3:
+            adaptations['reduce_difficulty'] = True
+            adaptations['add_scaffolding'] = True
+            
+        # Adapt to emotional state
+        if emotional_state.get('stress_level', 0) > 3:
+            adaptations['calm_mode'] = True
+            adaptations['reduce_stimulation'] = True
+            adaptations['suggest_break'] = True
+            
+        # Learning style optimization
+        adaptations['content_format'] = self._optimize_format(profile.primary_learning_style)
+        
+        return adaptations
+```
+
+### Behavioral Pattern Recognition
+```python
+# ✅ Pattern recognition for intervention
+import numpy as np
+from sklearn.cluster import DBSCAN
+from typing import Tuple
+
+class BehaviorAnalyzer:
+    def __init__(self):
+        self.engagement_threshold = 0.6
+        self.frustration_threshold = 0.7
+        
+    def analyze_session_patterns(self, session_data: List[Dict]) -> Dict:
+        """
+        Identify patterns indicating need for intervention
+        """
+        patterns = {
+            'engagement_trend': self._calculate_engagement_trend(session_data),
+            'frustration_indicators': self._detect_frustration(session_data),
+            'optimal_session_length': self._predict_optimal_duration(session_data),
+            'break_recommendations': self._suggest_breaks(session_data)
+        }
+        
+        return patterns
+    
+    def _detect_frustration(self, session_data: List[Dict]) -> Dict:
+        """
+        Early detection of frustration based on interaction patterns
+        """
+        indicators = {
+            'rapid_clicking': False,
+            'repeated_errors': False,
+            'decreased_accuracy': False,
+            'increased_response_time': False
+        }
+        
+        # Analyze click patterns
+        click_intervals = [d.get('click_interval', 0) for d in session_data]
+        if np.mean(click_intervals) < 0.5:  # Very rapid clicking
+            indicators['rapid_clicking'] = True
+            
+        # Check for error patterns
+        errors = [d.get('incorrect', False) for d in session_data[-10:]]
+        if sum(errors) >= 5:  # 5+ errors in last 10 attempts
+            indicators['repeated_errors'] = True
+            
+        return indicators
+```
+
+### Personalization Algorithms
+```python
+# ✅ Content personalization for neurodiverse learners
+class ContentPersonalizer:
+    def __init__(self):
+        self.content_repository = ContentRepository()
+        self.adaptation_rules = self._load_adaptation_rules()
+    
+    def personalize_lesson(self, 
+                          student_profile: StudentLearningProfile,
+                          lesson_topic: str) -> Dict:
+        """
+        Generate personalized lesson content
+        """
+        base_content = self.content_repository.get_lesson(lesson_topic)
+        
+        personalized = {
+            'content': self._adapt_content_format(base_content, student_profile),
+            'pacing': self._calculate_optimal_pacing(student_profile),
+            'scaffolding': self._add_scaffolding(base_content, student_profile),
+            'reinforcement': self._select_reinforcement_strategy(student_profile),
+            'sensory_adaptations': self._apply_sensory_preferences(student_profile)
+        }
+        
+        return personalized
+    
+    def _adapt_content_format(self, content: Dict, profile: StudentLearningProfile) -> Dict:
+        """
+        Adapt content format based on learning style
+        """
+        if profile.primary_learning_style == LearningStyle.VISUAL:
+            return {
+                'format': 'visual_heavy',
+                'images': self._enhance_visual_elements(content),
+                'text_overlay': True,
+                'color_coding': True
+            }
+        elif profile.primary_learning_style == LearningStyle.AUDITORY:
+            return {
+                'format': 'audio_focused',
+                'narration': self._generate_narration(content),
+                'sound_effects': True,
+                'background_music': profile.sensory_preferences.get('background_sound', False)
+            }
+        # ... other adaptations
+```
+
+## Model Training & Validation
+
+### Ethical AI Training
+```python
+# ✅ Bias detection and fairness testing
+class FairnessValidator:
+    def __init__(self):
+        self.protected_attributes = [
+            'autism_severity',
+            'communication_level', 
+            'sensory_sensitivity',
+            'motor_skills',
+            'cognitive_processing_speed'
+        ]
+    
+    def validate_model_fairness(self, model, test_data: pd.DataFrame) -> Dict:
+        """
+        Test model for bias against neurodiverse characteristics
+        """
+        fairness_metrics = {}
+        
+        for attribute in self.protected_attributes:
+            # Test for disparate impact
+            fairness_metrics[f'{attribute}_disparate_impact'] = \
+                self._test_disparate_impact(model, test_data, attribute)
+                
+            # Test for equalized odds
+            fairness_metrics[f'{attribute}_equalized_odds'] = \
+                self._test_equalized_odds(model, test_data, attribute)
+        
+        return fairness_metrics
+    
+    def _test_disparate_impact(self, model, data: pd.DataFrame, attribute: str) -> float:
+        """
+        Ensure model doesn't discriminate based on neurodiverse traits
+        """
+        # Implementation of disparate impact testing
+        pass
+```
+
+### Model Interpretability
+```python
+# ✅ Explainable AI for educational decisions
+import shap
+from lime import lime_tabular
+
+class ModelExplainer:
+    def __init__(self, model):
+        self.model = model
+        self.explainer = shap.TreeExplainer(model)
+        
+    def explain_difficulty_adjustment(self, student_data: Dict) -> Dict:
+        """
+        Explain why AI recommended difficulty change
+        """
+        explanation = {
+            'decision': 'increase_difficulty',
+            'confidence': 0.85,
+            'primary_factors': [
+                'consistent_high_performance_last_5_sessions',
+                'decreased_time_to_completion',
+                'low_help_requests'
+            ],
+            'supporting_evidence': {
+                'average_score': 0.92,
+                'completion_time_trend': 'decreasing',
+                'engagement_level': 'high'
+            },
+            'human_readable': "Alex has been performing consistently well and completing tasks faster, suggesting readiness for more challenging content."
+        }
+        
+        return explanation
+```
+
+## Data Science Standards
+
+### Feature Engineering for Educational Data
+```python
+# ✅ Educational-specific feature engineering
+class EducationalFeatureEngineer:
+    def create_learning_features(self, raw_data: pd.DataFrame) -> pd.DataFrame:
+        """
+        Create features relevant to learning assessment
+        """
+        features = raw_data.copy()
+        
+        # Time-based features
+        features['session_duration'] = features['end_time'] - features['start_time']
+        features['time_on_task'] = features['active_time'] / features['session_duration']
+        features['response_time_avg'] = features.groupby('student_id')['response_time'].transform('mean')
+        
+        # Performance features
+        features['accuracy_trend'] = features.groupby('student_id')['correct'].transform(
+            lambda x: x.rolling(window=5).mean()
+        )
+        features['help_seeking_frequency'] = features.groupby('student_id')['help_requests'].transform('sum')
+        
+        # Engagement features
+        features['click_pattern_consistency'] = features.groupby('student_id')['click_intervals'].transform(
+            lambda x: 1 / (x.std() + 1)  # Higher consistency = lower std dev
+        )
+        
+        # Emotional regulation features
+        features['emotional_stability'] = features.groupby('student_id')['emotional_state'].transform(
+            lambda x: 1 - x.std()  # Lower variance = more stability
+        )
+        
+        return features
+```
+
+### A/B Testing for Educational Interventions
+```python
+# ✅ Rigorous testing of educational interventions
+class EducationalABTester:
+    def __init__(self):
+        self.minimum_effect_size = 0.2  # Cohen's d
+        self.statistical_power = 0.8
+        self.alpha = 0.05
+        
+    def design_intervention_test(self, 
+                               intervention_description: str,
+                               target_metric: str,
+                               student_population: List[str]) -> Dict:
+        """
+        Design A/B test for educational intervention
+        """
+        test_design = {
+            'intervention': intervention_description,
+            'primary_metric': target_metric,
+            'sample_size': self._calculate_sample_size(),
+            'randomization_strategy': 'stratified_by_learning_profile',
+            'duration_weeks': 4,  # Minimum for educational impact
+            'success_criteria': {
+                'primary': f'{target_metric} improvement >= {self.minimum_effect_size}',
+                'secondary': 'no_negative_emotional_impact',
+                'guardrail': 'engagement_maintained'
+            }
+        }
+        
+        return test_design
+```
+
+## Implementation Guidelines
+
+### Real-Time Processing
+- **Latency Requirements**: AI recommendations < 200ms
+- **Scalability**: Handle 10K+ concurrent students
+- **Fallback**: Graceful degradation when AI services unavailable
+- **Monitoring**: Track model performance and drift
+
+### Model Deployment
+```python
+# ✅ Safe model deployment pipeline
+class ModelDeploymentPipeline:
+    def __init__(self):
+        self.staging_environment = "staging"
+        self.production_environment = "production"
+        
+    def deploy_model(self, model_version: str, validation_results: Dict) -> bool:
+        """
+        Safe deployment with validation gates
+        """
+        # Validation gates
+        if not self._validate_fairness_metrics(validation_results):
+            raise ValueError("Model failed fairness validation")
+            
+        if not self._validate_performance_metrics(validation_results):
+            raise ValueError("Model failed performance validation")
+            
+        # Gradual rollout
+        self._deploy_to_staging(model_version)
+        self._run_shadow_mode(model_version, duration_hours=24)
+        self._deploy_to_production(model_version, traffic_percentage=10)
+        
+        return True
+```
+
+### Monitoring & Alerting
+- **Model Drift**: Alert when performance degrades
+- **Bias Detection**: Continuous monitoring for fairness
+- **Student Outcomes**: Track educational impact metrics
+- **System Health**: Monitor latency, errors, and availability
+
+## Ethical Considerations
+- **Consent**: Explicit opt-in for AI-driven adaptations
+- **Transparency**: Students and parents understand how AI works
+- **Human Override**: Teachers can always override AI recommendations
+- **Data Minimization**: Use only necessary data for personalization
+- **Regular Audits**: Quarterly review of AI decisions and outcomes

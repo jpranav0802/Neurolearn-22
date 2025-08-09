@@ -1,0 +1,40 @@
+---
+alwaysApply: true
+---
+
+# NeuroLearn Project Structure Guide
+
+NeuroLearn is an AI-powered educational platform for neurodiverse students (primarily autism spectrum). This is a complex multi-tenant system with strict accessibility and privacy requirements.
+
+## Core Principles
+- **Accessibility First**: All features must meet WCAG 2.1 AA minimum, AAA preferred
+- **Privacy by Design**: COPPA and FERPA compliance is mandatory
+- **Sensory-Friendly**: Avoid overstimulation, provide customization options
+- **Multi-Modal Learning**: Support visual, auditory, and kinesthetic learning styles
+- **Real-time Adaptation**: AI-powered personalization based on user behavior
+
+## Project Architecture
+```
+├── frontend/                 # React + TypeScript + Tailwind
+│   ├── student-app/         # Student learning interface
+│   ├── parent-dashboard/    # Parent monitoring portal
+│   ├── educator-portal/     # Teacher/therapist interface
+│   └── shared/              # Shared components and utilities
+├── backend/                 # Node.js + Express + PostgreSQL
+│   ├── auth-service/        # Multi-role authentication
+│   ├── learning-engine/     # AI adaptation algorithms
+│   ├── content-service/     # Learning content management
+│   └── analytics-service/   # Progress tracking and reporting
+├── ai-services/             # Python + FastAPI + ML models
+│   ├── adaptation-engine/   # Real-time learning adjustment
+│   ├── behavior-analysis/   # Pattern recognition
+│   └── content-generation/  # AI-generated learning materials
+└── infrastructure/          # Docker, CI/CD, monitoring
+```
+
+## Key Requirements
+- All user interactions must be logged for educational analytics
+- Emotional state tracking and support features are core functionality
+- Multi-stakeholder communication (student, parent, teacher, therapist)
+- Offline capabilities for essential learning modules
+- Real-time progress synchronization across all user types

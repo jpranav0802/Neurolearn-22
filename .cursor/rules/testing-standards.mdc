@@ -1,0 +1,380 @@
+---
+globs: *.test.ts,*.test.js,*.spec.ts,*.spec.js,*.test.tsx,*.spec.tsx,test/**/*,__tests__/**/*,*.cy.ts
+---
+
+# Testing Standards for NeuroLearn
+
+## Testing Philosophy
+- **Accessibility-First Testing**: Every test must validate accessibility requirements
+- **Real User Scenarios**: Test with actual neurodiverse user patterns
+- **Progressive Enhancement**: Ensure core functionality works without AI/advanced features
+- **Stress Testing**: Validate performance under sensory overwhelm scenarios
+
+## Mandatory Testing Categories
+
+### 1. Accessibility Testing
+```typescript
+// ✅ Comprehensive accessibility test suite
+import { render, screen } from '@testing-library/react';
+import { axe, toHaveNoViolations } from 'jest-axe';
+import userEvent from '@testing-library/user-event';
+
+expect.extend(toHaveNoViolations);
+
+describe('LessonCard Accessibility', () => {
+  it('meets WCAG 2.1 AA standards', async () => {
+    const { container } = render(
+      <LessonCard 
+        title="Shapes and Patterns"
+        description="Learn about different shapes"
+        difficulty="beginner"
+      />
+    );
+    
+    const results = await axe(container);
+    expect(results).toHaveNoViolations();
+  });
+
+  it('supports keyboard navigation', async () => {
+    const user = userEvent.setup();
+    render(<LessonCard title="Test Lesson" onStart={jest.fn()} />);
+    
+    // Tab to start button
+    await user.tab();
+    expect(screen.getByRole('button', { name: /start lesson/i })).toHaveFocus();
+    
+    // Enter key activates button
+    await user.keyboard('{Enter}');
+    expect(mockOnStart).toHaveBeenCalled();
+  });
+
+  it('provides appropriate ARIA labels', () => {
+    render(<LessonCard title="Math Lesson" progress={75} />);
+    
+    expect(screen.getByRole('button')).toHaveAttribute(
+      'aria-label', 
+      'Start Math Lesson, 75% complete'
+    );
+    expect(screen.getByRole('progressbar')).toHaveAttribute('aria-valuenow', '75');
+  });
+
+  it('supports screen readers', () => {
+    render(<LessonCard title="Reading Lesson" difficulty="intermediate" />);
+    
+    expect(screen.getByText('Reading Lesson')).toBeInTheDocument();
+    expect(screen.getByText(/intermediate difficulty/i)).toHaveAttribute('role', 'status');
+  });
+});
+```
+
+### 2. Sensory Settings Testing
+```typescript
+// ✅ Test sensory customization features
+describe('Sensory Settings', () => {
+  it('reduces animations when motion preference is disabled', () => {
+    // Mock reduced motion preference
+    Object.defineProperty(window, 'matchMedia', {
+      writable: true,
+      value: jest.fn().mockImplementation(query => ({
+        matches: query === '(prefers-reduced-motion: reduce)',
+        addEventListener: jest.fn(),
+        removeEventListener: jest.fn(),
+      })),
+    });
+
+    render(<AnimatedLessonCard />);
+    
+    const card = screen.getByTestId('lesson-card');
+    expect(card).toHaveStyle('animation: none');
+  });
+
+  it('adjusts brightness based on user settings', () => {
+    const brightnessSettings = { brightness: 0.6 };
+    render(<LessonInterface settings={brightnessSettings} />);
+    
+    const container = screen.getByTestId('lesson-container');
+    expect(container).toHaveStyle('filter: brightness(0.6)');
+  });
+
+  it('provides volume controls for audio content', async () => {
+    const user = userEvent.setup();
+    render(<AudioLessonComponent />);
+    
+    const volumeSlider = screen.getByRole('slider', { name: /volume/i });
+    expect(volumeSlider).toHaveAttribute('aria-valuemin', '0');
+    expect(volumeSlider).toHaveAttribute('aria-valuemax', '100');
+    
+    await user.click(volumeSlider);
+    expect(volumeSlider).toHaveFocus();
+  });
+});
+```
+
+### 3. Learning Adaptation Testing
+```typescript
+// ✅ Test AI-driven learning adaptations
+describe('Learning Adaptation Engine', () => {
+  it('adjusts difficulty based on performance', async () => {
+    const mockStudent = createMockStudentProfile({
+      performance: { accuracyRate: 0.95, completionTime: 'fast' }
+    });
+
+    render(<AdaptiveLessonComponent student={mockStudent} />);
+    
+    // Simulate high performance
+    await simulateCorrectAnswers(5);
+    
+    // Should increase difficulty
+    expect(screen.getByTestId('difficulty-indicator')).toHaveTextContent('Advanced');
+  });
+
+  it('provides scaffolding when student struggles', async () => {
+    const mockStudent = createMockStudentProfile({
+      performance: { accuracyRate: 0.3, helpRequests: 'frequent' }
+    });
+
+    render(<AdaptiveLessonComponent student={mockStudent} />);
+    
+    // Simulate struggles
+    await simulateIncorrectAnswers(3);
+    
+    // Should provide additional help
+    expect(screen.getByTestId('scaffolding-hints')).toBeVisible();
+    expect(screen.getByText(/need some help/i)).toBeInTheDocument();
+  });
+
+  it('adapts to emotional state changes', async () => {
+    const mockStudent = createMockStudentProfile({
+      emotionalState: { stressLevel: 4, engagementLevel: 2 }
+    });
+
+    render(<EmotionallyAwareLessonComponent student={mockStudent} />);
+    
+    // Should show calm mode
+    expect(screen.getByTestId('calm-mode-indicator')).toBeVisible();
+    expect(screen.getByText(/take a moment to breathe/i)).toBeInTheDocument();
+  });
+});
+```
+
+### 4. Data Privacy Testing
+```typescript
+// ✅ Test privacy and security measures
+describe('Data Privacy & Security', () => {
+  it('encrypts PII before storage', async () => {
+    const mockStudentData = {
+      name: 'Alex Johnson',
+      email: 'parent@example.com',
+      notes: 'Sensitive information'
+    };
+
+    const encryptedData = await encryptStudentData(mockStudentData);
+    
+    expect(encryptedData.name).not.toBe('Alex Johnson');
+    expect(encryptedData.name).toMatch(/^[a-f0-9]+$/); // Encrypted hex string
+    expect(encryptedData.email).not.toBe('parent@example.com');
+  });
+
+  it('enforces role-based access controls', () => {
+    const teacherUser = { role: 'teacher', id: 'teacher-123' };
+    const parentUser = { role: 'parent', id: 'parent-456' };
+    const studentData = { studentId: 'student-789', teacherId: 'teacher-123' };
+
+    expect(canAccessStudentData(teacherUser, studentData)).toBe(true);
+    expect(canAccessStudentData(parentUser, studentData)).toBe(false);
+  });
+
+  it('logs data access for audit trail', async () => {
+    const mockUser = { id: 'user-123', role: 'teacher' };
+    const mockStudentData = { id: 'student-456' };
+
+    await accessStudentData(mockUser, mockStudentData.id);
+
+    expect(mockAuditLogger).toHaveBeenCalledWith({
+      userId: 'user-123',
+      action: 'read',
+      resourceId: 'student-456',
+      timestamp: expect.any(Date),
+      ipAddress: expect.any(String)
+    });
+  });
+});
+```
+
+### 5. Multi-Modal Learning Testing
+```typescript
+// ✅ Test different learning modalities
+describe('Multi-Modal Learning Support', () => {
+  it('provides visual learning content', () => {
+    const visualLearner = createMockStudent({ learningStyle: 'visual' });
+    render(<LessonComponent student={visualLearner} topic="shapes" />);
+    
+    expect(screen.getByTestId('visual-content')).toBeVisible();
+    expect(screen.getAllByRole('img')).toHaveLength(3); // Multiple visual aids
+    expect(screen.getByTestId('color-coding')).toBeVisible();
+  });
+
+  it('supports auditory learning preferences', async () => {
+    const auditoryLearner = createMockStudent({ learningStyle: 'auditory' });
+    render(<LessonComponent student={auditoryLearner} topic="reading" />);
+    
+    expect(screen.getByTestId('audio-narration')).toBeVisible();
+    expect(screen.getByRole('button', { name: /play audio/i })).toBeEnabled();
+    
+    // Test audio controls
+    const playButton = screen.getByRole('button', { name: /play audio/i });
+    await userEvent.click(playButton);
+    expect(mockAudioService.play).toHaveBeenCalled();
+  });
+
+  it('enables kinesthetic interactions', async () => {
+    const kinestheticLearner = createMockStudent({ learningStyle: 'kinesthetic' });
+    render(<InteractiveLessonComponent student={kinestheticLearner} />);
+    
+    const draggableElement = screen.getByTestId('draggable-shape');
+    const dropZone = screen.getByTestId('drop-zone');
+    
+    // Test drag and drop
+    await userEvent.dragAndDrop(draggableElement, dropZone);
+    expect(screen.getByText(/great job/i)).toBeVisible();
+  });
+});
+```
+
+### 6. Performance & Load Testing
+```typescript
+// ✅ Performance testing for neurodiverse users
+describe('Performance Requirements', () => {
+  it('loads content within accessibility requirements (2 seconds)', async () => {
+    const startTime = performance.now();
+    
+    render(<LessonComponent />);
+    await waitFor(() => {
+      expect(screen.getByTestId('lesson-content')).toBeVisible();
+    });
+    
+    const loadTime = performance.now() - startTime;
+    expect(loadTime).toBeLessThan(2000); // 2 second requirement
+  });
+
+  it('handles high sensory load gracefully', () => {
+    const heavyContentLesson = createMockLesson({
+      visualElements: 10,
+      audioTracks: 3,
+      animations: 5
+    });
+
+    render(<LessonComponent lesson={heavyContentLesson} />);
+    
+    // Should automatically reduce complexity
+    expect(screen.getByTestId('reduced-complexity-mode')).toBeVisible();
+  });
+
+  it('maintains performance with concurrent users', async () => {
+    // Simulate 100 concurrent students
+    const promises = Array.from({ length: 100 }, () => 
+      renderLessonForStudent(createMockStudent())
+    );
+
+    const results = await Promise.all(promises);
+    results.forEach(result => {
+      expect(result.loadTime).toBeLessThan(2000);
+    });
+  });
+});
+```
+
+## Testing Utilities
+
+### Mock Data for Neurodiverse Learners
+```typescript
+// ✅ Realistic test data for autism spectrum learners
+export const createMockStudentProfile = (overrides = {}) => ({
+  id: 'student-123',
+  name: 'Alex',
+  age: 8,
+  learningStyle: 'visual',
+  attentionSpanMinutes: 15,
+  sensoryPreferences: {
+    brightness: 0.8,
+    soundVolume: 0.6,
+    reduceAnimations: false,
+    backgroundNoise: false
+  },
+  emotionalRegulation: {
+    currentStressLevel: 2,
+    triggerEvents: ['loud_noises', 'sudden_changes'],
+    calmingStrategies: ['deep_breathing', 'quiet_time']
+  },
+  communicationLevel: 'verbal',
+  supportNeeds: 'minimal',
+  ...overrides
+});
+
+export const createMockLearningSession = (overrides = {}) => ({
+  sessionId: 'session-456',
+  startTime: new Date(),
+  lessonTopic: 'shapes',
+  interactions: [],
+  performanceMetrics: {
+    accuracy: 0.85,
+    timeOnTask: 0.9,
+    helpRequests: 2
+  },
+  emotionalStates: [
+    { timestamp: new Date(), stressLevel: 2, engagementLevel: 4 }
+  ],
+  ...overrides
+});
+```
+
+### Accessibility Testing Helpers
+```typescript
+// ✅ Custom accessibility matchers
+export const customMatchers = {
+  toBeAccessible: async (element) => {
+    const results = await axe(element);
+    return {
+      pass: results.violations.length === 0,
+      message: () => results.violations.map(v => v.description).join('\n')
+    };
+  },
+  
+  toSupportKeyboardNavigation: (element) => {
+    const focusableElements = element.querySelectorAll(
+      'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+    );
+    
+    return {
+      pass: focusableElements.length > 0,
+      message: () => 'Element should contain focusable children for keyboard navigation'
+    };
+  }
+};
+```
+
+## Testing Requirements Checklist
+
+### Before Each Pull Request
+- [ ] All accessibility tests pass (axe-core)
+- [ ] Keyboard navigation tested manually
+- [ ] Screen reader compatibility verified
+- [ ] Performance benchmarks met (<2s load time)
+- [ ] Multi-modal learning paths tested
+- [ ] Sensory settings variations tested
+- [ ] Data privacy validations pass
+- [ ] Error handling for overwhelm scenarios
+
+### Integration Testing
+- [ ] Parent-teacher communication workflows
+- [ ] Real-time progress synchronization
+- [ ] AI adaptation decision logging
+- [ ] Cross-browser compatibility (including assistive tech)
+- [ ] Mobile accessibility on tablets
+
+### User Acceptance Testing
+- [ ] Testing with actual neurodiverse students
+- [ ] Parent and teacher feedback collection
+- [ ] Therapist validation of therapeutic features
+- [ ] Long-term usability studies
+- [ ] Cultural sensitivity validation

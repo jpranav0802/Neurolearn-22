@@ -78,7 +78,11 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     }
   };
 
-  const API_URL = process.env.REACT_APP_AUTH_API_URL || 'http://localhost:4001/api/auth';
+  // Prefer same-origin serverless functions in production
+  const sameOriginApi = (typeof window !== 'undefined' && window.location.hostname !== 'localhost')
+    ? `${window.location.origin}/api/auth`
+    : '';
+  const API_URL = process.env.REACT_APP_AUTH_API_URL || sameOriginApi || 'http://localhost:4010/api/auth';
   const isApiConfiguredForProd = Boolean(process.env.REACT_APP_AUTH_API_URL) && !/localhost|127\.0\.0\.1/i.test(String(process.env.REACT_APP_AUTH_API_URL));
 
   const login = async (email: string, password: string) => {

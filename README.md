@@ -1,12 +1,12 @@
 # NeuroLearn - AI-Powered Educational Platform for Neurodiverse Students
 
-[![Live Demo](https://img.shields.io/badge/Live%20Demo-Vercel-00C7B7?style=for-the-badge&logo=vercel)](https://student-app-one.vercel.app)
+[![Live Demo](https://img.shields.io/badge/Live%20Demo-Vercel-00C7B7?style=for-the-badge&logo=vercel)](https://neurolearn-22.vercel.app)
 
 NeuroLearn is a comprehensive educational technology platform specifically designed for children with autism spectrum disorders. Built with accessibility-first principles, the platform provides personalized learning experiences through AI-driven adaptation while maintaining strict compliance with educational privacy regulations (COPPA/FERPA).
 
 ## 🌐 Live Demo
 
-**Student App**: [https://student-app-one.vercel.app](https://student-app-one.vercel.app)
+**Student App**: [https://neurolearn-22.vercel.app](https://neurolearn-22.vercel.app)
 
 Experience the NeuroLearn platform firsthand with our live demo. The student app showcases our accessibility-first design and sensory-friendly interface.
 

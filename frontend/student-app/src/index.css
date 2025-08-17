@@ -1,0 +1,233 @@
+@import url('https://fonts.googleapis.com/css2?family=Lexend:wght@400;500;600;700&display=swap');
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --brand-primary: #FF7B54;
+  --brand-secondary: #FFB26B;
+  --background-light: #FFF2E9;
+  --text-primary: #1c1c1e;
+  --text-secondary: #5a6470;
+  --border-color: #e5e7eb;
+}
+
+body {
+  font-family: 'Lexend', sans-serif;
+  margin: 0;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  font-size: calc(16px * var(--app-font-scale, 1));
+}
+
+* {
+  box-sizing: border-box;
+}
+
+.brand-primary {
+  color: var(--brand-primary);
+}
+
+.bg-brand-primary {
+  background-color: var(--brand-primary);
+}
+
+.bg-brand-secondary {
+  background-color: var(--brand-secondary);
+}
+
+.bg-background-light {
+  background-color: var(--background-light);
+}
+
+.text-primary {
+  color: var(--text-primary);
+}
+
+.text-secondary {
+  color: var(--text-secondary);
+}
+
+.border-color {
+  border-color: var(--border-color);
+}
+
+/* Liquid Glass Effects */
+@keyframes shimmer {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+.glass-morphism {
+  position: relative;
+  backdrop-filter: blur(10px) saturate(180%);
+  -webkit-backdrop-filter: blur(10px) saturate(180%);
+}
+
+.glass-card {
+  position: relative;
+  backdrop-filter: blur(16px) saturate(180%);
+  -webkit-backdrop-filter: blur(16px) saturate(180%);
+}
+
+/* Liquid Glass Mouse Tracking */
+.glass-card:hover {
+  --mouse-x: var(--x);
+  --mouse-y: var(--y);
+}
+
+/* Enhanced focus states for accessibility */
+.glass-morphism:focus,
+.glass-card:focus {
+  outline: 2px solid var(--brand-primary);
+  outline-offset: 2px;
+}
+
+/* Smooth transitions for all glass elements */
+.glass-morphism,
+.glass-card {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Subtle animation for glass elements */
+@keyframes float {
+  0%, 100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-5px);
+  }
+}
+
+.glass-float {
+  animation: float 6s ease-in-out infinite;
+}
+
+/* Advanced Hover Animations */
+@keyframes borderGlow {
+  0%, 100% {
+    transform: translateX(-100%) rotate(45deg);
+    opacity: 0;
+  }
+  50% {
+    transform: translateX(100%) rotate(45deg);
+    opacity: 1;
+  }
+}
+
+@keyframes shimmerAdvanced {
+  0% {
+    transform: translateX(-100%) skewX(-45deg);
+    opacity: 0;
+  }
+  50% {
+    opacity: 1;
+  }
+  100% {
+    transform: translateX(200%) skewX(-45deg);
+    opacity: 0;
+  }
+}
+
+/* Enhanced 3D perspective effects */
+.glass-card {
+  transform-style: preserve-3d;
+  perspective: 1000px;
+}
+
+/* Smooth hover transitions with micro-interactions */
+.glass-card:hover {
+  transform: perspective(1000px) rotateX(2deg) rotateY(2deg) translateZ(10px);
+  transition: all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+/* Content lift effect */
+.glass-card:hover .relative {
+  transform: translateZ(20px);
+  transition: transform 0.3s ease-out;
+}
+
+/* Interactive glow effect */
+.glass-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: radial-gradient(circle at 50% 50%, rgba(255, 123, 84, 0.1) 0%, transparent 70%);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  pointer-events: none;
+  border-radius: inherit;
+}
+
+.glass-card:hover::before {
+  opacity: 1;
+}
+
+/* Pulse effect for enhanced interactivity */
+@keyframes pulse {
+  0%, 100% {
+    box-shadow: 0 0 0 0 rgba(255, 123, 84, 0.3);
+  }
+  50% {
+    box-shadow: 0 0 0 10px rgba(255, 123, 84, 0);
+  }
+}
+
+.glass-card:hover {
+  animation: pulse 2s infinite;
+}
+
+/* Button Ripple Effect */
+@keyframes ripple {
+  0% {
+    transform: scale(0);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(4);
+    opacity: 0;
+  }
+}
+
+/* Enhanced button hover states */
+.glass-morphism {
+  transform-style: preserve-3d;
+  perspective: 1000px;
+}
+
+.glass-morphism:hover {
+  box-shadow: 
+    0 20px 40px rgba(255, 123, 84, 0.4),
+    0 0 0 1px rgba(255, 255, 255, 0.1),
+    inset 0 1px 0 rgba(255, 255, 255, 0.3);
+}
+
+/* Smooth performance optimizations */
+.glass-card,
+.glass-morphism {
+  will-change: transform, box-shadow, opacity;
+  backface-visibility: hidden;
+}
+
+/* High contrast helper */
+.high-contrast * {
+  outline-color: #000 !important;
+}
+.high-contrast body, .high-contrast .hc-bg {
+  background: #000 !important;
+  color: #fff !important;
+}
+.high-contrast a { color: #0ff !important; }
+
+/* Reduced motion helper */
+.reduced-motion *, .reduced-motion *::before, .reduced-motion *::after {
+  animation: none !important;
+  transition: none !important;
+}

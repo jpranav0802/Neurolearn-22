@@ -169,3 +169,6 @@ student-data-exports/
 # Development certificates
 localhost.pem
 localhost-key.pem
+
+# YoYo AI version control directory
+.yoyo/

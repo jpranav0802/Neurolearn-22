@@ -1,0 +1,18 @@
+export { default as AboutPage } from './AboutPage';
+export { default as CurriculumPage } from './CurriculumPage';
+export { default as TeamPage } from './TeamPage';
+export { default as PricingPage } from './PricingPage';
+export { default as ContactPage } from './ContactPage';
+export { LoginPage, SignupPage } from './AuthPages';
+export { default as LessonsPage } from './LessonsPage';
+export { default as AllLessonsPage } from './AllLessonsPage';
+export { default as LessonOverview } from './LessonOverview';
+export { default as LessonPlayer } from './LessonPlayer';
+export { default as LessonTest } from './LessonTest';
+export { default as LessonTestResults } from './LessonTestResults';
+export { default as LessonComplete } from './LessonComplete';
+export { default as RewardsPage } from './RewardsPage';
+export { default as SettingsPage } from './SettingsPage';
+export { default as AssessmentIntro } from './AssessmentIntro';
+export { default as AssessmentTest } from './AssessmentTest';
+export { default as AssessmentResults } from './AssessmentResults';

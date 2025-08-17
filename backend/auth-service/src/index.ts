@@ -17,18 +17,28 @@ import { authenticateToken } from './middleware/auth';
 dotenv.config();
 
 const app = express();
-const PORT = process.env.PORT || 3000;
+// Use 4001 by default to avoid clashing with CRA dev server on 3000
+const PORT = process.env.PORT || 4001;
 
-// Redis client for session storage
-const redisClient = createClient({
-  url: process.env.REDIS_URL || 'redis://localhost:6379'
-});
-
-redisClient.connect().catch(console.error);
+// Session storage: Redis (preferred) with fallback to in-memory for dev
+let sessionStore: any;
+let redisClient: any;
+const useMemory = process.env.USE_IN_MEMORY_SESSION === 'true';
+if (!useMemory) {
+  try {
+    redisClient = createClient({ url: process.env.REDIS_URL || 'redis://localhost:6379' });
+    redisClient.connect().catch((err: any) => {
+      logger.warn('Redis connect error, falling back to in-memory session store', { error: err?.message });
+    });
+    sessionStore = new RedisStore({ client: redisClient });
+  } catch (err) {
+    logger.warn('Redis not available, using in-memory session store for development');
+  }
+}
 
 // Session configuration with COPPA compliance
 const sessionConfig = {
-  store: new RedisStore({ client: redisClient }),
+  store: sessionStore || new (session as any).MemoryStore(),
   secret: process.env.SESSION_SECRET || 'your-session-secret',
   resave: false,
   saveUninitialized: false,

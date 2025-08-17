@@ -1,0 +1,22 @@
+{
+  "users": [
+    {
+      "id": "hlBJbX27bTJ4_3e47YuoU",
+      "email": "jpranav08@gmail.com",
+      "passwordHash": "$2a$10$ZlzNALpH9KcVQNNv0cbn1eIDPJKP33ujLsy1w/ccGeQruqpn9eAzm",
+      "firstName": "Pranav",
+      "lastName": "Jain",
+      "role": "student",
+      "createdAt": "2025-08-12T10:48:34.325Z"
+    },
+    {
+      "id": "PJhHE3cq7QmBTNrcIvqDb",
+      "email": "jsunny07@gmail.com",
+      "passwordHash": "$2a$10$iHAo59F.7TXfqgEewUxsn.IcGnWoxZm5hxYvz/M0W6XE4GoTsAdvq",
+      "firstName": "John",
+      "lastName": "User",
+      "role": "student",
+      "createdAt": "2025-08-12T21:23:21.204Z"
+    }
+  ]
+}

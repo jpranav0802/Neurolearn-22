@@ -234,7 +234,7 @@ const SensoryKinesthetic: React.FC<{ initial?: RawAssessmentData['kinestheticSor
   const balloons: DragItem[] = [{ id: 'b-red', label: '', color: '#ef4444' }, { id: 'b-blue', label: '', color: '#3b82f6' }, { id: 'b-green', label: '', color: '#10b981' }];
   const baskets: DragItem[] = [{ id: 'k-red', label: 'Red' }, { id: 'k-blue', label: 'Blue' }, { id: 'k-green', label: 'Green' }];
   const [placed, setPlaced] = useState<Record<string, string | null>>({ 'k-red': null, 'k-blue': null, 'k-green': null });
-  const unplaced = useMemo(() => balloons.filter((b) => !Object.values(placed).includes(b.id)), [placed]);
+  const unplaced = useMemo(() => balloons.filter((b) => !Object.values(placed).includes(b.id)), [placed, balloons]);
   function onDrop(basketId: string, balloonId: string) { setPlaced((prev) => ({ ...prev, [basketId]: balloonId })) }
   function finish() { const matches = Number(placed['k-red'] === 'b-red') + Number(placed['k-blue'] === 'b-blue') + Number(placed['k-green'] === 'b-green'); onDone({ matches, total: 3, ease, enjoy }) }
   return (

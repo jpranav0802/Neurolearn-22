@@ -21,51 +21,51 @@ const Header: React.FC = () => {
         <NeuroLearnLogo />
 
         <nav className="hidden items-center gap-8 md:flex" role="navigation" aria-label="Main navigation">
-                  <a 
-          className="text-sm font-medium text-text-secondary transition-colors hover:text-brand-primary focus:text-brand-primary focus:outline-none focus:ring-2 focus:ring-brand-primary focus:ring-offset-2 cursor-pointer" 
-          onClick={() => {
-            console.log('📖 About page clicked');
-            navigate('/about');
-          }}
-        >
-          About
-        </a>
-                  <a 
-          className="text-sm font-medium text-text-secondary transition-colors hover:text-brand-primary focus:text-brand-primary focus:outline-none focus:ring-2 focus:ring-brand-primary focus:ring-offset-2 cursor-pointer" 
-          onClick={() => {
-            console.log('📚 Curriculum page clicked');
-            navigate('/curriculum');
-          }}
-        >
-          Curriculum
-        </a>
-                  <a 
-          className="text-sm font-medium text-text-secondary transition-colors hover:text-brand-primary focus:text-brand-primary focus:outline-none focus:ring-2 focus:ring-brand-primary focus:ring-offset-2 cursor-pointer" 
-          onClick={() => {
-            console.log('👥 Team page clicked');
-            navigate('/team');
-          }}
-        >
-          Team
-        </a>
-                  <a 
-          className="text-sm font-medium text-text-secondary transition-colors hover:text-brand-primary focus:text-brand-primary focus:outline-none focus:ring-2 focus:ring-brand-primary focus:ring-offset-2 cursor-pointer" 
-          onClick={() => {
-            console.log('💰 Pricing page clicked');
-            navigate('/pricing');
-          }}
-        >
-          Pricing
-        </a>
-                  <a 
-          className="text-sm font-medium text-text-secondary transition-colors hover:text-brand-primary focus:text-brand-primary focus:outline-none focus:ring-2 focus:ring-brand-primary focus:ring-offset-2 cursor-pointer" 
-          onClick={() => {
-            console.log('📞 Contact page clicked');
-            navigate('/contact');
-          }}
-        >
-          Contact
-        </a>
+          <button 
+            className="text-sm font-medium text-text-secondary transition-colors hover:text-brand-primary focus:text-brand-primary focus:outline-none focus:ring-2 focus:ring-brand-primary focus:ring-offset-2 cursor-pointer bg-transparent border-none" 
+            onClick={() => {
+              console.log('📖 About page clicked');
+              navigate('/about');
+            }}
+          >
+            About
+          </button>
+          <button 
+            className="text-sm font-medium text-text-secondary transition-colors hover:text-brand-primary focus:text-brand-primary focus:outline-none focus:ring-2 focus:ring-brand-primary focus:ring-offset-2 cursor-pointer bg-transparent border-none" 
+            onClick={() => {
+              console.log('📚 Curriculum page clicked');
+              navigate('/curriculum');
+            }}
+          >
+            Curriculum
+          </button>
+          <button 
+            className="text-sm font-medium text-text-secondary transition-colors hover:text-brand-primary focus:text-brand-primary focus:outline-none focus:ring-2 focus:ring-brand-primary focus:ring-offset-2 cursor-pointer bg-transparent border-none" 
+            onClick={() => {
+              console.log('👥 Team page clicked');
+              navigate('/team');
+            }}
+          >
+            Team
+          </button>
+          <button 
+            className="text-sm font-medium text-text-secondary transition-colors hover:text-brand-primary focus:text-brand-primary focus:outline-none focus:ring-2 focus:ring-brand-primary focus:ring-offset-2 cursor-pointer bg-transparent border-none" 
+            onClick={() => {
+              console.log('💰 Pricing page clicked');
+              navigate('/pricing');
+            }}
+          >
+            Pricing
+          </button>
+          <button 
+            className="text-sm font-medium text-text-secondary transition-colors hover:text-brand-primary focus:text-brand-primary focus:outline-none focus:ring-2 focus:ring-brand-primary focus:ring-offset-2 cursor-pointer bg-transparent border-none" 
+            onClick={() => {
+              console.log('📞 Contact page clicked');
+              navigate('/contact');
+            }}
+          >
+            Contact
+          </button>
         </nav>
 
         <div className="flex items-center gap-3">

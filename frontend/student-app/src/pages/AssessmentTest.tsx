@@ -1,6 +1,5 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useTheme } from '../contexts/ThemeContext';
 import NeuroLearnAssessment, { LearnerProfile, RawAssessmentData } from '../components/NeuroLearnAssessment';
 
 // Simple reaction-time tap test: circle changes color after random delay; user taps asap

@@ -79,41 +79,73 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   };
 
   const API_URL = process.env.REACT_APP_AUTH_API_URL || 'http://localhost:4001/api/auth';
+  const isApiConfiguredForProd = Boolean(process.env.REACT_APP_AUTH_API_URL) && !/localhost|127\.0\.0\.1/i.test(String(process.env.REACT_APP_AUTH_API_URL));
 
   const login = async (email: string, password: string) => {
-    const res = await fetch(`${API_URL}/login`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      credentials: 'include',
-      body: JSON.stringify({ email, password })
-    });
-    const data = await res.json();
-    if (!res.ok) {
-      throw new Error(data?.message || 'Login failed');
+    try {
+      const res = await fetch(`${API_URL}/login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ email, password })
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data?.message || 'Login failed');
+      }
+      localStorage.setItem('authToken', data.accessToken);
+      localStorage.setItem('userData', JSON.stringify(data.user));
+      setUser(data.user);
+      return;
+    } catch (error) {
+      // Fallback: if no public API is configured, perform local demo auth
+      if (!isApiConfiguredForProd) {
+        const demoUser: User = {
+          id: 'demo-user',
+          email: email.toLowerCase(),
+          firstName: 'Demo',
+          lastName: 'User',
+          role: 'student',
+          isEmailVerified: true,
+        };
+        localStorage.setItem('authToken', 'demo-token');
+        localStorage.setItem('userData', JSON.stringify(demoUser));
+        setUser(demoUser);
+        return;
+      }
+      throw error;
     }
-    localStorage.setItem('authToken', data.accessToken);
-    localStorage.setItem('userData', JSON.stringify(data.user));
-    setUser(data.user);
   };
 
   const register = async (userData: RegisterData) => {
-    const res = await fetch(`${API_URL}/register`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      credentials: 'include',
-      body: JSON.stringify({ ...userData })
-    });
-    const data = await res.json();
-    if (!res.ok) {
-      throw new Error(data?.message || 'Registration failed');
+    try {
+      const res = await fetch(`${API_URL}/register`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ ...userData })
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data?.message || 'Registration failed');
+      }
+      await login(userData.email, userData.password);
+      return;
+    } catch (error) {
+      if (!isApiConfiguredForProd) {
+        // Client-only demo registration simply proceeds to login
+        await login(userData.email, userData.password);
+        return;
+      }
+      throw error;
     }
-    // After successful server-side registration, immediately log in
-    await login(userData.email, userData.password);
   };
 
   const logout = async () => {
     try {
-      await fetch(`${API_URL}/logout`, { method: 'POST', credentials: 'include' });
+      if (isApiConfiguredForProd) {
+        await fetch(`${API_URL}/logout`, { method: 'POST', credentials: 'include' });
+      }
     } catch {}
     localStorage.removeItem('authToken');
     localStorage.removeItem('userData');
